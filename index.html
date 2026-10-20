@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParkFlow Central</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<main id="vista-login" class="login-page">
+  <div class="login-card">
+    <div class="login-icon">P</div>
+    <h1 class="login-title">ParkFlow Central</h1>
+    <p class="login-sub">Control Operativo de Parqueadero y Lavadero 24/7</p>
+
+    <div class="label-caps">SELECCIONA TU ROL OPERATIVO</div>
+    <div class="role-grid" id="roles">
+      <button type="button" class="role-chip" data-rol="Administrador">Administrador</button>
+      <button type="button" class="role-chip sel" data-rol="Operador">Operador</button>
+      <button type="button" class="role-chip" data-rol="Cajero">Cajero</button>
+      <button type="button" class="role-chip" data-rol="Lavador">Lavador</button>
+      <button type="button" class="role-chip" data-rol="Cliente">Cliente</button>
+    </div>
+
+    <div class="field">
+      <label id="lbl-codigo" for="login-codigo">Código de Operador</label>
+      <input id="login-codigo" value="OP-2094" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="login-clave">Contraseña Operativa</label>
+      <input id="login-clave" type="password" value="parkflow2026">
+    </div>
+    <div class="msg-error" id="login-error" hidden></div>
+    <button type="button" class="btn btn-primary btn-block" data-action="login">Ingresar al Sistema</button>
+    <button type="button" class="link-btn" data-action="reiniciar">Reiniciar datos de demostración</button>
+  </div>
+</main>
+
+<!-- ============ APLICACIÓN ============ -->
+<div id="vista-app" class="app" hidden>
+
+  <aside class="sidebar">
+    <div class="brand-row">
+      <div class="brand-icon">P</div>
+      <div>
+        <div class="brand-name">PARKFLOW</div>
+        <div class="brand-sub">24/7 CONTROL</div>
+      </div>
+    </div>
+
+    <nav id="nav">
+      <button class="nav-item" data-pantalla="dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard Vivo
+      </button>
+      <button class="nav-item" data-pantalla="ingreso">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        Registro Ingreso
+      </button>
+      <button class="nav-item" data-pantalla="reservas">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Reservas Activas
+      </button>
+      <button class="nav-item" data-pantalla="lavado">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/></svg>
+        Control Lavado
+      </button>
+      <button class="nav-item" data-pantalla="caja">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>
+        Liquidación &amp; Caja
+      </button>
+
+      <button class="nav-item" data-pantalla="c-panel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Mi Panel
+      </button>
+      <button class="nav-item" data-pantalla="c-reservas">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Mis Reservas
+      </button>
+      <button class="nav-item" data-pantalla="c-lavado">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/></svg>
+        Mi Lavado
+      </button>
+      <button class="nav-item" data-pantalla="c-cuenta">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>
+        Mi Cuenta y Pagos
+      </button>
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+    <div class="user-card">
+      <div class="avatar" id="user-avatar">O</div>
+      <div class="user-info">
+        <div class="user-name" id="user-nombre">Operador</div>
+        <div class="user-role"><span class="dot"></span><span id="user-codigo">OP-2094</span></div>
+      </div>
+      <button class="icon-btn" data-action="logout" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="content">
+    <header class="topbar">
+      <div>
+        <h2 id="titulo-pantalla">Dashboard Operativo</h2>
+        <p id="subtitulo-pantalla">Mapa de celdas en tiempo real y estadísticas del día</p>
+      </div>
+      <div class="topbar-right">
+        <div class="demo-clock" title="Reloj del sistema (modo demostración)">
+          <span class="clock-label">HILO VIVO:</span>
+          <span id="reloj">09:42:00</span>
+          <button class="mini-btn" data-action="avanzar" data-min="15">+15 min</button>
+          <button class="mini-btn" data-action="avanzar" data-min="60">+1 h</button>
+        </div>
+        <div class="badge sync"><span class="dot"></span> Sincronizado</div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="screen" id="pantalla-dashboard">
+      <div class="kpi-row" id="kpis"></div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Distribución del Parqueadero (Zona A, B &amp; C)</h3>
+          <div class="legend">
+            <span><i class="ldot c-green"></i>Disponible</span>
+            <span><i class="ldot c-blue"></i>Ocupada</span>
+            <span><i class="ldot c-amber"></i>Reservada</span>
+            <span><i class="ldot c-gray"></i>Mantenimiento</span>
+          </div>
+        </div>
+        <div id="mapa"></div>
+        <div class="cell-detail" id="detalle-celda">Selecciona una celda para ver su detalle.</div>
+      </div>
+    </section>
+
+    <!-- REGISTRO DE INGRESO -->
+    <section class="screen" id="pantalla-ingreso">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><h3>Registrar ingreso de vehículo</h3></div>
+          <div class="field">
+            <label for="ing-placa">Placa</label>
+            <input id="ing-placa" maxlength="7" placeholder="Ej. ABC123" autocomplete="off">
+            <div class="msg-error" id="ing-placa-err" hidden></div>
+          </div>
+          <div class="field">
+            <label for="ing-tipo">Tipo de vehículo</label>
+            <select id="ing-tipo"><option>Automóvil</option><option>Moto</option></select>
+          </div>
+          <div class="field">
+            <label for="ing-celda">Celda asignada</label>
+            <select id="ing-celda"></select>
+            <div class="msg-error" id="ing-celda-err" hidden></div>
+          </div>
+          <div class="info-chip" id="ing-reserva" hidden></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" data-action="confirmar-ingreso">Confirmar Ingreso</button>
+            <button class="btn btn-outline" data-action="limpiar-ingreso">Limpiar</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Últimos ingresos</h3></div>
+          <div id="ultimos-ingresos"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESERVAS -->
+    <section class="screen" id="pantalla-reservas">
+      <div class="two-col two-col-wide">
+        <div class="card">
+          <div class="card-head"><h3>Reservas registradas</h3><span class="hint">Tolerancia: 15 min</span></div>
+          <div id="tabla-reservas"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Nueva reserva</h3></div>
+          <div class="field">
+            <label for="res-placa">Placa</label>
+            <input id="res-placa" maxlength="7" placeholder="Ej. XYZ789" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="res-celda">Celda</label>
+            <select id="res-celda"></select>
+          </div>
+          <div class="field">
+            <label for="res-hora">Hora de la reserva</label>
+            <input id="res-hora" type="time" value="11:00">
+          </div>
+          <div class="msg-error" id="res-error" hidden></div>
+          <button class="btn btn-primary" data-action="crear-reserva">Crear reserva</button>
+        </div>
+      </div>
+      <div class="card mt">
+        <div class="card-head"><h3>Historial de reservas (auditoría)</h3></div>
+        <div id="tabla-auditoria"></div>
+      </div>
+    </section>
+
+    <!-- LAVADO -->
+    <section class="screen" id="pantalla-lavado">
+      <div class="card">
+        <div class="inline-form">
+          <div class="field grow">
+            <label for="lav-placa">Solicitar lavado (placa del vehículo)</label>
+            <input id="lav-placa" maxlength="7" placeholder="Ej. ABC123" autocomplete="off">
+          </div>
+          <div class="field">
+            <label>Servicio</label>
+            <div class="static-field">Lavado General · $25.000</div>
+          </div>
+          <button class="btn btn-primary" data-action="solicitar-lavado">Solicitar lavado</button>
+        </div>
+        <div class="msg-error" id="lav-error" hidden></div>
+      </div>
+      <div class="kanban" id="kanban"></div>
+    </section>
+
+    <!-- CAJA -->
+    <section class="screen" id="pantalla-caja">
+      <div class="two-col two-col-wide">
+        <div class="card">
+          <div class="inline-form">
+            <div class="field grow">
+              <label for="caja-placa">Consultar cuenta por placa</label>
+              <input id="caja-placa" maxlength="7" value="ABC123" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" data-action="buscar-cuenta">Consultar</button>
+          </div>
+          <div id="cuenta"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Arqueo de caja activo</h3></div>
+          <div id="arqueo"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTE: PANEL -->
+    <section class="screen" id="pantalla-c-panel">
+      <div class="two-col two-col-wide">
+        <div class="card">
+          <div class="card-head"><h3>Mis vehículos</h3></div>
+          <div class="veh-grid" id="c-vehiculos"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Agregar vehículo</h3></div>
+          <div class="field">
+            <label for="cv-placa">Placa</label>
+            <input id="cv-placa" maxlength="7" placeholder="Ej. DEF789" autocomplete="off">
+          </div>
+          <div class="msg-error" id="cv-error" hidden></div>
+          <button class="btn btn-primary" data-action="agregar-vehiculo">Agregar vehículo</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTE: RESERVAS -->
+    <section class="screen" id="pantalla-c-reservas">
+      <div class="two-col two-col-wide">
+        <div class="card">
+          <div class="card-head"><h3>Mis reservas</h3><span class="hint">Tolerancia: 15 min</span></div>
+          <div id="c-tabla-reservas"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Nueva reserva</h3></div>
+          <div class="field">
+            <label for="cr-placa">Vehículo</label>
+            <select id="cr-placa"></select>
+          </div>
+          <div class="field">
+            <label for="cr-celda">Celda</label>
+            <select id="cr-celda"></select>
+          </div>
+          <div class="field">
+            <label for="cr-hora">Hora de llegada</label>
+            <input id="cr-hora" type="time" value="11:00">
+          </div>
+          <div class="msg-error" id="cr-error" hidden></div>
+          <button class="btn btn-primary" data-action="crear-reserva-cliente">Reservar celda</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTE: LAVADO -->
+    <section class="screen" id="pantalla-c-lavado">
+      <div class="card">
+        <div class="inline-form">
+          <div class="field grow">
+            <label for="cl-placa">Solicitar lavado para mi vehículo</label>
+            <select id="cl-placa"></select>
+          </div>
+          <div class="field">
+            <label>Servicio</label>
+            <div class="static-field">Lavado General · $25.000</div>
+          </div>
+          <button class="btn btn-primary" data-action="solicitar-lavado-cliente">Solicitar lavado</button>
+        </div>
+        <div class="msg-error" id="cl-error" hidden></div>
+      </div>
+      <div class="card mt">
+        <div class="card-head"><h3>Seguimiento de mis lavados</h3></div>
+        <div id="c-tabla-lavados"></div>
+      </div>
+    </section>
+
+    <!-- CLIENTE: CUENTA Y PAGOS -->
+    <section class="screen" id="pantalla-c-cuenta">
+      <div class="two-col two-col-wide">
+        <div class="card">
+          <div class="card-head"><h3>Mis cuentas abiertas</h3></div>
+          <div id="c-cuentas"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Mis comprobantes</h3></div>
+          <div id="c-historial"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="modal" class="modal" hidden></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
