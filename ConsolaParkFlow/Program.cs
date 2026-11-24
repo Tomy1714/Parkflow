@@ -7,6 +7,8 @@ using LibParkFlow.Implementaciones.Patrones.StrategyPago;
 using LibParkFlow.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
+//clase Program
+
 Console.ForegroundColor = ConsoleColor.Cyan;
 Console.WriteLine("===============================================================");
 Console.WriteLine("       PARKFLOW CENTRAL - BACKEND C# .NET / EF CORE / SQL      ");
@@ -291,3 +293,5 @@ Console.WriteLine("=============================================================
 Console.WriteLine("       DEMOSTRACION FINALIZADA - TODOS LOS COMPONENTES OK      ");
 Console.WriteLine("===============================================================");
 Console.ResetColor();
+
+
