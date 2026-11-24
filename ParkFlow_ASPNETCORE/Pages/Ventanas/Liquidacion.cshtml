@@ -1,0 +1,177 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.LiquidacionModel
+@{
+    ViewData["Title"] = "Caja y Liquidación";
+    ViewData["Subtitle"] = "Liquidación y cobro de parqueadero y servicios adicionales (Facade & Strategy)";
+}
+
+<div class="two-col two-col-wide">
+    <!-- Columna izquierda: Liquidación de la cuenta seleccionada -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Consultar y Cobrar Cuenta</h3>
+        </div>
+
+        <form method="post" asp-page-handler="BtConsultar" class="inline-form mb-4">
+            @Html.AntiForgeryToken()
+            <div class="field grow">
+                <label>Placa del vehículo</label>
+                <input type="text" asp-for="PlacaConsulta" placeholder="Ej. ABC123" required style="text-transform:uppercase" />
+            </div>
+            <button type="submit" class="btn btn-primary">Consultar</button>
+        </form>
+
+        @if (Model.CuentaActiva != null)
+        {
+            <div class="cuenta" style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-top:16px;">
+                <div class="cuenta-head">
+                    <span class="plate-big">@Model.CuentaActiva.Placa</span>
+                    @if (Model.CuentaActiva.EstadoRegistro == "ACTIVO")
+                    {
+                        <span class="tag tag-amber">PENDIENTE DE PAGO</span>
+                    }
+                    else if (Model.CuentaActiva.EstadoRegistro == "PAGADO")
+                    {
+                        <span class="tag tag-green">PAGADO</span>
+                    }
+                    else
+                    {
+                        <span class="tag tag-gray">@Model.CuentaActiva.EstadoRegistro</span>
+                    }
+                </div>
+
+                <div class="meta mb-3" style="font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--border); padding-bottom:10px;">
+                    Celda @Model.CuentaActiva.Celda · Ingreso @Model.CuentaActiva.FechaEntrada.ToString("hh:mm tt") · Estadía @Model.CuentaActiva.MinutosEstadia min
+                </div>
+
+                <div class="line" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13.5px;">
+                    <span>Tarifa Parqueadero (@Model.CuentaActiva.MinutosEstadia min)</span>
+                    <b>$@Model.CuentaActiva.CostoParqueadero.ToString("N0")</b>
+                </div>
+
+                @if (Model.CuentaActiva.Facturables != null && Model.CuentaActiva.Facturables.Any())
+                {
+                    @foreach (var lav in Model.CuentaActiva.Facturables)
+                    {
+                        <div class="line" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13.5px; color:var(--green)">
+                            <span>✨ @lav.TipoLavado (Completado)</span>
+                            <b>$@lav.PrecioBase.ToString("N0")</b>
+                        </div>
+                    }
+                }
+
+                @if (Model.CuentaActiva.EnCurso != null && Model.CuentaActiva.EnCurso.Any())
+                {
+                    <div class="info-chip" style="margin-top:10px; background:rgba(245,158,11,0.15); border-color:var(--amber); color:var(--amber)">
+                        ⚠ Hay un lavado en curso para este vehículo. Debe completarse antes de cerrar el cobro.
+                    </div>
+                }
+
+                <div class="total" style="display:flex; justify-content:space-between; font-size:17px; font-weight:800; border-top:1px solid var(--border); padding-top:14px; margin-top:14px; color:var(--ink);">
+                    <span>Total a Liquidar:</span>
+                    <span style="color:var(--indigo)">$@Model.CuentaActiva.Total.ToString("N0")</span>
+                </div>
+
+                <!-- Formulario de Cobro -->
+                @if (Model.CuentaActiva.EstadoRegistro == "ACTIVO")
+                {
+                    <form method="post" asp-page-handler="BtPagar" class="mt-4" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="PlacaConsulta" value="@Model.CuentaActiva.Placa" />
+
+                        <div class="field">
+                            <label>Método de Pago (Strategy Pattern)</label>
+                            <select asp-for="MetodoPago">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta">Tarjeta Débito / Crédito</option>
+                                <option value="Transferencia">Transferencia Bancaria / QR</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label>Monto Recibido</label>
+                            <input type="number" asp-for="MontoRecibido" step="1000" min="@Model.CuentaActiva.Total" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block mt">
+                            Confirmar Cobro y Generar Comprobante
+                        </button>
+                    </form>
+                }
+                else if (Model.CuentaActiva.EstadoRegistro == "PAGADO")
+                {
+                    <form method="post" asp-page-handler="BtAutorizarSalida" style="margin-top:20px;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="PlacaConsulta" value="@Model.CuentaActiva.Placa" />
+                        <button type="submit" class="btn btn-primary btn-block" style="background:var(--green)">
+                            Autorizar Salida y Liberar Celda
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty" style="margin-top:20px;">
+                Ingrese una placa arriba o elija un vehículo de la lista de cuentas abiertas.
+            </div>
+        }
+    </div>
+
+    <!-- Columna derecha: Cuentas abiertas actualmente -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Cuentas Abiertas en Parqueadero (@Model.CuentasAbiertas.Count)</h3>
+        </div>
+
+        <div class="table-wrap" style="max-height: 480px; overflow-y:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PLACA</th>
+                        <th>CELDA</th>
+                        <th>INGRESO</th>
+                        <th>ESTADO</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.CuentasAbiertas.Any())
+                    {
+                        @foreach (var r in Model.CuentasAbiertas)
+                        {
+                            <tr>
+                                <td><b>@r.Placa</b></td>
+                                <td><span class="tag tag-blue">@r.NumeroCelda</span></td>
+                                <td>@r.FechaHoraEntrada.ToString("hh:mm tt")</td>
+                                <td>
+                                    @if (r.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                    {
+                                        <span class="tag tag-amber">ACTIVO</span>
+                                    }
+                                    else if (r.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.PAGADO)
+                                    {
+                                        <span class="tag tag-green">PAGADO</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form method="post" asp-page-handler="BtConsultar">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="placa" value="@r.Placa" />
+                                        <button type="submit" class="btn btn-outline btn-sm">Consultar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="empty">No hay cuentas abiertas.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

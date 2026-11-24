@@ -1,0 +1,138 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.VehiculosModel
+@{
+    ViewData["Title"] = "Catálogo de Vehículos";
+    ViewData["Subtitle"] = "Gestión de vehículos registrados en la base de datos (Entidad Vehículo)";
+}
+
+<div class="two-col">
+    <!-- Columna izquierda: Formulario de edición o creación -->
+    <div class="card">
+        <div class="card-head">
+            <h3>@(Model.Vehiculo == null ? "Vehículo" : (Model.Borrando ? "Eliminar Vehículo" : "Datos del Vehículo"))</h3>
+            @if (Model.Vehiculo == null)
+            {
+                <form method="post" asp-page-handler="BtNuevo">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary btn-sm">+ Nuevo Vehículo</button>
+                </form>
+            }
+        </div>
+
+        @if (Model.Vehiculo != null)
+        {
+            <form method="post" asp-page-handler="BtGuardar">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Borrando" />
+
+                <div class="field">
+                    <label>Placa</label>
+                    @if (Model.Borrando)
+                    {
+                        <input type="text" asp-for="Vehiculo.Placa" readonly />
+                    }
+                    else
+                    {
+                        <input type="text" asp-for="Vehiculo.Placa" placeholder="Ej. ABC123" required style="text-transform:uppercase;" />
+                    }
+                </div>
+
+                <div class="field">
+                    <label>Tipo de Vehículo</label>
+                    <select asp-for="Vehiculo.TipoVehiculo" disabled="@Model.Borrando">
+                        <option value="Automóvil">Automóvil</option>
+                        <option value="Moto">Moto</option>
+                        <option value="Camioneta">Camioneta</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Marca</label>
+                    <input type="text" asp-for="Vehiculo.Marca" placeholder="Ej. Mazda, Toyota..." disabled="@Model.Borrando" />
+                </div>
+
+                <div class="field">
+                    <label>Modelo</label>
+                    <input type="text" asp-for="Vehiculo.Modelo" placeholder="Ej. 3, Corolla..." disabled="@Model.Borrando" />
+                </div>
+
+                <div class="btn-row mt">
+                    @if (Model.Borrando)
+                    {
+                        <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Guardar Vehículo</button>
+                    }
+                    <button type="submit" asp-page-handler="BtCancelar" class="btn btn-outline" formnovalidate>Cancelar</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="empty">
+                Haga clic en "+ Nuevo Vehículo" o seleccione uno de la lista para editar o eliminar.
+            </div>
+        }
+    </div>
+
+    <!-- Columna derecha: Listado de vehículos -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Vehículos Registrados (@(Model.Lista?.Count ?? 0))</h3>
+            <form method="post" asp-page-handler="BtRefrescar">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline btn-sm">Actualizar</button>
+            </form>
+        </div>
+
+        <div class="table-wrap" style="max-height: 480px; overflow-y:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PLACA</th>
+                        <th>TIPO</th>
+                        <th>MARCA</th>
+                        <th>MODELO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Lista != null && Model.Lista.Any())
+                    {
+                        @foreach (var v in Model.Lista)
+                        {
+                            <tr>
+                                <td><span class="plate">@v.Placa</span></td>
+                                <td>@v.TipoVehiculo</td>
+                                <td>@(v.Marca ?? "-")</td>
+                                <td>@(v.Modelo ?? "-")</td>
+                                <td>
+                                    <div class="btn-row">
+                                        <form method="post" asp-page-handler="BtModificar">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="data" value="@v.Placa" />
+                                            <button type="submit" class="btn btn-outline btn-sm">Editar</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="BtBorrar">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="data" value="@v.Placa" />
+                                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="empty">No hay vehículos registrados en la base de datos.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,62 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.UsuariosModel
+@{
+    ViewData["Title"] = "Usuarios y Roles";
+    ViewData["Subtitle"] = "Gestión de usuarios y credenciales operativas (Factory Method & SOLID)";
+}
+
+<div class="card">
+    <div class="card-head">
+        <h3>Usuarios del Sistema (@(Model.ListaUsuarios?.Count ?? 0))</h3>
+        <form method="post" asp-page-handler="BtRefrescar">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline btn-sm">Actualizar</button>
+        </form>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>NOMBRE</th>
+                    <th>DOCUMENTO</th>
+                    <th>CÓDIGO OPERATIVO</th>
+                    <th>CORREO</th>
+                    <th>ESTADO</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.ListaUsuarios != null && Model.ListaUsuarios.Any())
+                {
+                    @foreach (var u in Model.ListaUsuarios)
+                    {
+                        <tr>
+                            <td><b>#@u.IdUsuario</b></td>
+                            <td><span class="user-name">@u.Nombre</span></td>
+                            <td>@u.Documento</td>
+                            <td><span class="tag tag-blue">@u.CodigoOperativo</span></td>
+                            <td>@(u.Correo ?? "-")</td>
+                            <td>
+                                @if (u.Activo)
+                                {
+                                    <span class="tag tag-green">ACTIVO</span>
+                                }
+                                else
+                                {
+                                    <span class="tag tag-gray">INACTIVO</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="empty">No hay usuarios registrados.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,80 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.CeldasModel
+@{
+    ViewData["Title"] = "Mapa y Monitoreo de Celdas";
+    ViewData["Subtitle"] = "Supervisión en tiempo real del estado de cada celda (Observer Pattern & RN-01)";
+}
+
+@if (Model.Contadores != null)
+{
+    <div class="kpi-row">
+        <div class="kpi">
+            <span class="label-caps">TOTAL CELDAS</span>
+            <div style="font-size:24px; font-weight:800; color:var(--ink); margin-top:4px;">@Model.Contadores.Total</div>
+        </div>
+        <div class="kpi">
+            <span class="label-caps" style="color:var(--green)">DISPONIBLES</span>
+            <div style="font-size:24px; font-weight:800; color:var(--green); margin-top:4px;">@Model.Contadores.Disponibles</div>
+        </div>
+        <div class="kpi">
+            <span class="label-caps" style="color:var(--blue)">OCUPADAS</span>
+            <div style="font-size:24px; font-weight:800; color:var(--blue); margin-top:4px;">@Model.Contadores.Ocupadas</div>
+        </div>
+        <div class="kpi">
+            <span class="label-caps" style="color:var(--amber)">RESERVADAS</span>
+            <div style="font-size:24px; font-weight:800; color:var(--amber); margin-top:4px;">@Model.Contadores.Reservadas</div>
+        </div>
+        <div class="kpi">
+            <span class="label-caps" style="color:var(--ink-faint)">MANTENIMIENTO</span>
+            <div style="font-size:24px; font-weight:800; color:var(--ink-faint); margin-top:4px;">@Model.Contadores.Mantenimiento</div>
+        </div>
+    </div>
+}
+
+@if (Model.Lista != null && Model.Lista.Any())
+{
+    var zonas = Model.Lista.GroupBy(c => c.Zona).OrderBy(g => g.Key);
+    @foreach (var zona in zonas)
+    {
+        <div class="card mb-4" style="margin-bottom:20px;">
+            <div class="card-head">
+                <h3>Zona @zona.Key - @(zona.Key == "A" ? "Automóviles Principales" : (zona.Key == "B" ? "Motos y Compactos" : "Camionetas y Mixtos"))</h3>
+                <span class="badge">@zona.Count() celdas</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:12px;">
+                @foreach (var c in zona.OrderBy(x => x.NumeroCelda))
+                {
+                    var isDispo = c.Estado == LibParkFlow.Entidades.EstadoCelda.DISPONIBLE;
+                    var isOcupada = c.Estado == LibParkFlow.Entidades.EstadoCelda.OCUPADA;
+                    var isReserva = c.Estado == LibParkFlow.Entidades.EstadoCelda.RESERVADA;
+                    var borderCol = isDispo ? "var(--green)" : (isOcupada ? "var(--blue)" : (isReserva ? "var(--amber)" : "var(--border)"));
+                    var bgCol = isDispo ? "rgba(34,197,94,0.06)" : (isOcupada ? "rgba(59,130,246,0.08)" : (isReserva ? "rgba(245,158,11,0.08)" : "var(--surface)"));
+
+                    <div style="background:@bgCol; border:1px solid @borderCol; border-radius:10px; padding:12px 10px; text-align:center;">
+                        <div style="font-size:15px; font-weight:800; color:var(--ink);">@c.NumeroCelda</div>
+                        <div style="font-size:10.5px; color:var(--ink-soft); margin:2px 0 6px;">@c.TipoPermitido</div>
+                        <div>
+                            @if (isDispo)
+                            {
+                                <span class="tag tag-green" style="font-size:10px; padding:2px 6px;">Libre</span>
+                            }
+                            else if (isOcupada)
+                            {
+                                <span class="tag tag-blue" style="font-size:10px; padding:2px 6px;">Ocupada</span>
+                            }
+                            else if (isReserva)
+                            {
+                                <span class="tag tag-amber" style="font-size:10px; padding:2px 6px;">Reserva</span>
+                            }
+                            else
+                            {
+                                <span class="tag tag-gray" style="font-size:10px; padding:2px 6px;">Mant.</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}

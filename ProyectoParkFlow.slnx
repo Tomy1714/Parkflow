@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="ConsolaParkFlow/ConsolaParkFlow.csproj" />
+  <Project Path="LibParkFlow/LibParkFlow.csproj" />
+  <Project Path="LibPresentaciones/LibPresentaciones.csproj" />
+  <Project Path="ParkFlow.Api/ParkFlow.Api.csproj" />
+  <Project Path="ParkFlow_ASPNETCORE/ParkFlow_ASPNETCORE.csproj" />
+  <Project Path="PruebasUnitarias/PruebasUnitarias.csproj" />
+</Solution>

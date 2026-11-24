@@ -1,0 +1,118 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.CajasModel
+@{
+    ViewData["Title"] = "Gestión y Arqueo de Caja";
+    ViewData["Subtitle"] = "Control de turnos, apertura y cierre de caja con arqueo financiero";
+}
+
+<div class="two-col">
+    <!-- Columna izquierda: Estado de la caja activa / Apertura / Cierre -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Caja Actual del Turno</h3>
+        </div>
+
+        @if (Model.CajaActiva != null)
+        {
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px;">
+                <div class="cuenta-head">
+                    <span class="plate-big" style="color:var(--green)">CAJA #@Model.CajaActiva.IdCaja</span>
+                    <span class="tag tag-green">ABIERTA</span>
+                </div>
+
+                <div style="font-size:13.5px; line-height:1.8; margin-top:14px;">
+                    <div><b>Apertura:</b> @Model.CajaActiva.FechaApertura.ToString("dd/MM/yyyy hh:mm tt")</div>
+                    <div><b>Cajero:</b> @(Model.CajaActiva.Usuario != null ? Model.CajaActiva.Usuario.Nombre : "Mariana Cajera (ID: 3)")</div>
+                    <div><b>Monto Base Inicial:</b> $@Model.CajaActiva.MontoInicial.ToString("N0")</div>
+                    <div style="font-size:16px; color:var(--indigo); margin-top:8px;">
+                        <b>Total Recaudado en Turno:</b> $@Model.CajaActiva.TotalRecaudado.ToString("N0")
+                    </div>
+                </div>
+
+                <form method="post" asp-page-handler="BtCerrarCaja" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="data" value="@Model.CajaActiva.IdCaja" />
+                    <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('¿Confirma el cierre y arqueo definitivo de la caja?');">
+                        Cerrar Turno de Caja y Realizar Arqueo
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px;">
+                <div class="info-chip" style="margin-bottom:16px;">
+                    ℹ No hay ninguna caja abierta en este momento. Ingrese el monto base para habilitar cobros en el sistema.
+                </div>
+
+                <form method="post" asp-page-handler="BtAbrirCaja">
+                    @Html.AntiForgeryToken()
+                    <div class="field">
+                        <label>Monto Base Inicial (Efectivo en Caja)</label>
+                        <input type="number" asp-for="MontoInicial" step="5000" min="0" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block mt">
+                        Abrir Caja para el Turno
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+
+    <!-- Columna derecha: Historial de cajas -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Historial de Turnos de Caja (@(Model.HistorialCajas?.Count ?? 0))</h3>
+            <form method="post" asp-page-handler="BtRefrescar">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline btn-sm">Actualizar</button>
+            </form>
+        </div>
+
+        <div class="table-wrap" style="max-height: 480px; overflow-y:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>APERTURA</th>
+                        <th>CIERRE</th>
+                        <th>INICIAL</th>
+                        <th>RECAUDADO</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.HistorialCajas != null && Model.HistorialCajas.Any())
+                    {
+                        @foreach (var c in Model.HistorialCajas)
+                        {
+                            <tr>
+                                <td><b>#@c.IdCaja</b></td>
+                                <td>@c.FechaApertura.ToString("dd/MM hh:mm")</td>
+                                <td>@(c.FechaCierre.HasValue ? c.FechaCierre.Value.ToString("dd/MM hh:mm") : "-")</td>
+                                <td>$@c.MontoInicial.ToString("N0")</td>
+                                <td style="color:var(--green)"><b>$@c.TotalRecaudado.ToString("N0")</b></td>
+                                <td>
+                                    @if (c.EstadoCaja == LibParkFlow.Entidades.EstadoCaja.ABIERTA)
+                                    {
+                                        <span class="tag tag-green">ABIERTA</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag tag-gray">CERRADA</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="empty">No hay registros de cajas en el historial.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,146 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.IngresoModel
+@{
+    ViewData["Title"] = "Ingreso de Vehículos";
+    ViewData["Subtitle"] = "Registro de entrada de vehículos al parqueadero (HU-01)";
+}
+
+<div class="two-col">
+    <!-- Columna izquierda: Formulario de ingreso -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Registrar Ingreso de Vehículo</h3>
+        </div>
+
+        <form method="post" asp-page-handler="BtRegistrar">
+            @Html.AntiForgeryToken()
+
+            <div class="field">
+                <label>Placa del Vehículo</label>
+                <input type="text" asp-for="Placa" placeholder="Ej. ABC123" required style="text-transform:uppercase" />
+            </div>
+
+            <div class="field">
+                <label>Tipo de Vehículo</label>
+                <select asp-for="TipoVehiculo" class="form-select">
+                    <option value="Automóvil">Automóvil</option>
+                    <option value="Moto">Moto</option>
+                    <option value="Camioneta">Camioneta</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Marca (Opcional)</label>
+                <input type="text" asp-for="Marca" placeholder="Ej. Toyota, Mazda, Chevrolet..." />
+            </div>
+
+            <div class="field">
+                <label>Modelo (Opcional)</label>
+                <input type="text" asp-for="Modelo" placeholder="Ej. Corolla, 3, Onix..." />
+            </div>
+
+            <div class="field">
+                <label>Celda de Estacionamiento</label>
+                <select asp-for="NumeroCelda" required>
+                    <option value="">-- Seleccione una celda disponible --</option>
+                    @if (Model.CeldasDisponibles != null)
+                    {
+                        @foreach (var c in Model.CeldasDisponibles)
+                        {
+                            <option value="@c.NumeroCelda">@c.NumeroCelda (Zona @c.Zona - @c.TipoPermitido)</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt">
+                Registrar Ingreso y Generar Ticket
+            </button>
+        </form>
+
+        @if (Model.TicketGenerado != null)
+        {
+            <div class="mt p-3" style="background:var(--surface); border:1px solid var(--border); border-radius:11px; margin-top:20px;">
+                <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom:1px solid var(--border); padding-bottom:8px;">
+                    <span style="font-size:12px; font-weight:700; color:var(--green)">✓ TICKET GENERADO CON ÉXITO</span>
+                    <span style="font-weight:800; font-size:15px; color:var(--indigo)">#@Model.TicketGenerado.IdRegistro</span>
+                </div>
+                <div style="font-size:13px; line-height:1.7;">
+                    <div><b>Placa:</b> @Model.TicketGenerado.Placa</div>
+                    <div><b>Celda:</b> @Model.TicketGenerado.NumeroCelda</div>
+                    <div><b>Tipo:</b> @Model.TicketGenerado.TipoVehiculo</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.TicketGenerado.Marca))
+                    {
+                        <div><b>Marca / Modelo:</b> @Model.TicketGenerado.Marca @Model.TicketGenerado.Modelo</div>
+                    }
+                    <div><b>Hora Ingreso:</b> @Model.TicketGenerado.FechaHoraEntrada.ToString("hh:mm:ss tt")</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.TicketGenerado.MensajeReserva))
+                    {
+                        <div style="color:var(--amber)"><b>Reserva:</b> @Model.TicketGenerado.MensajeReserva</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Columna derecha: Últimos vehículos ingresados -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Vehículos Activos en Parqueadero (@Model.UltimosIngresos.Count)</h3>
+            <form method="post" asp-page-handler="BtRefrescar">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline btn-sm">Actualizar</button>
+            </form>
+        </div>
+
+        <div class="table-wrap" style="max-height: 480px; overflow-y:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>TICKET</th>
+                        <th>PLACA</th>
+                        <th>CELDA</th>
+                        <th>INGRESO</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.UltimosIngresos.Any())
+                    {
+                        @foreach (var reg in Model.UltimosIngresos)
+                        {
+                            <tr>
+                                <td><b>#@reg.IdRegistro</b></td>
+                                <td>
+                                    <span class="plate">@reg.Placa</span>
+                                    @if (reg.Vehiculo != null && !string.IsNullOrWhiteSpace(reg.Vehiculo.Marca))
+                                    {
+                                        <br /><small class="hint">@reg.Vehiculo.Marca @reg.Vehiculo.Modelo</small>
+                                    }
+                                </td>
+                                <td><span class="tag tag-blue">@reg.NumeroCelda</span></td>
+                                <td>@reg.FechaHoraEntrada.ToString("hh:mm tt")</td>
+                                <td>
+                                    @if (reg.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                    {
+                                        <span class="tag tag-amber">ACTIVO</span>
+                                    }
+                                    else if (reg.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.PAGADO)
+                                    {
+                                        <span class="tag tag-green">PAGADO</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="empty">No hay vehículos activos en este momento.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,138 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.ServiciosLavadoModel
+@{
+    ViewData["Title"] = "Control de Lavado";
+    ViewData["Subtitle"] = "Seguimiento del servicio: Pendiente → En Lavado → Listo (State Pattern & RN-05)";
+    var pendientes = Model.ListaServicios?.Where(s => s.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.PENDIENTE).OrderBy(s => s.FechaHoraSolicitud).ToList() ?? new();
+    var enLavado = Model.ListaServicios?.Where(s => s.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.EN_LAVADO).OrderBy(s => s.FechaHoraSolicitud).ToList() ?? new();
+    var listos = Model.ListaServicios?.Where(s => s.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.LISTO).OrderBy(s => s.FechaHoraSolicitud).ToList() ?? new();
+}
+
+<div class="card mb-4">
+    <div class="card-head">
+        <h3>Solicitar servicio de lavado (RN-05: Requiere parqueadero activo)</h3>
+    </div>
+    <form method="post" asp-page-handler="BtSolicitarLavado" class="inline-form">
+        @Html.AntiForgeryToken()
+        <div class="field grow">
+            <label>Placa del vehículo con ingreso activo</label>
+            <input type="text" asp-for="Placa" placeholder="Ej. ABC123" required list="placasActivas" />
+            <datalist id="placasActivas">
+                @if (Model.RegistrosActivos != null)
+                {
+                    @foreach (var r in Model.RegistrosActivos)
+                    {
+                        <option value="@r.Placa">@r.Placa - Celda @r.NumeroCelda</option>
+                    }
+                }
+            </datalist>
+        </div>
+        <div class="field" style="width: 220px;">
+            <label>Tipo de Servicio</label>
+            <input type="text" asp-for="TipoLavado" readonly />
+        </div>
+        <div class="field" style="width: 140px;">
+            <label>Precio</label>
+            <input type="text" value="$@Model.PrecioBase.ToString("N0")" readonly />
+        </div>
+        <button type="submit" class="btn btn-primary">Solicitar lavado</button>
+    </form>
+</div>
+
+<div class="kanban">
+    <!-- PENDIENTE -->
+    <div class="kcol">
+        <div class="kcol-title amber">
+            <span>● PENDIENTE</span>
+            <span>@pendientes.Count</span>
+        </div>
+        @if (pendientes.Any())
+        {
+            @foreach (var l in pendientes)
+            {
+                <div class="kcard">
+                    <div class="plate">@l.Placa</div>
+                    <div class="svc">
+                        @l.TipoLavado<br />
+                        Solicitado @l.FechaHoraSolicitud.ToString("hh:mm tt")
+                    </div>
+                    <form method="post" asp-page-handler="BtAvanzarEstado">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="data" value="@l.IdServicio" />
+                        <button type="submit" class="btn btn-outline btn-sm btn-block">Iniciar lavado</button>
+                    </form>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty">Sin servicios.</div>
+        }
+    </div>
+
+    <!-- EN LAVADO -->
+    <div class="kcol">
+        <div class="kcol-title blue">
+            <span>● EN LAVADO</span>
+            <span>@enLavado.Count</span>
+        </div>
+        @if (enLavado.Any())
+        {
+            @foreach (var l in enLavado)
+            {
+                <div class="kcard">
+                    <div class="plate">@l.Placa</div>
+                    <div class="svc">
+                        @l.TipoLavado<br />
+                        Solicitado @l.FechaHoraSolicitud.ToString("hh:mm tt")
+                        @(l.FechaHoraInicio.HasValue ? $" · Inicio {l.FechaHoraInicio.Value:hh:mm tt}" : "")
+                    </div>
+                    <form method="post" asp-page-handler="BtAvanzarEstado">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="data" value="@l.IdServicio" />
+                        <button type="submit" class="btn btn-primary btn-sm btn-block">Marcar como Listo</button>
+                    </form>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty">Sin servicios.</div>
+        }
+    </div>
+
+    <!-- LISTO -->
+    <div class="kcol">
+        <div class="kcol-title green">
+            <span>● LISTO</span>
+            <span>@listos.Count</span>
+        </div>
+        @if (listos.Any())
+        {
+            @foreach (var l in listos)
+            {
+                <div class="kcard">
+                    <div class="plate">@l.Placa</div>
+                    <div class="svc">
+                        @l.TipoLavado<br />
+                        Solicitado @l.FechaHoraSolicitud.ToString("hh:mm tt")
+                        @(l.FechaHoraInicio.HasValue ? $" · Inicio {l.FechaHoraInicio.Value:hh:mm tt}" : "")
+                        @(l.FechaHoraFin.HasValue ? $" · Fin {l.FechaHoraFin.Value:hh:mm tt}" : "")
+                    </div>
+                    @if (l.Facturado)
+                    {
+                        <span class="tag tag-gray">Facturado en Caja</span>
+                    }
+                    else
+                    {
+                        <span class="tag tag-green">Enviado a Caja</span>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty">Sin servicios.</div>
+        }
+    </div>
+</div>

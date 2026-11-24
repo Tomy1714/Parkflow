@@ -1,0 +1,1302 @@
+﻿@page
+@model ParkFlow_ASPNETCORE.Pages.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+@if (string.IsNullOrEmpty(Model.UsuarioRol))
+{
+    <!-- ============ LOGIN ============ -->
+    <main class="login-page">
+        <div class="login-card">
+            <div class="login-icon">P</div>
+            <h1 class="login-title">ParkFlow Central</h1>
+            <p class="login-sub">Control Operativo de Parqueadero y Lavadero 24/7</p>
+
+            <div class="label-caps">SELECCIONA TU ROL OPERATIVO</div>
+            <div class="role-grid">
+                @foreach (var rol in new[] { "Administrador", "Operador", "Cajero", "Lavador", "Cliente" })
+                {
+                    <form method="post" asp-page-handler="SeleccionarRol" style="display:contents;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="rol" value="@rol" />
+                        <button type="submit" class="role-chip @(Model.LoginRol == rol ? "sel" : "")">@rol</button>
+                    </form>
+                }
+            </div>
+
+            <form method="post" asp-page-handler="Login">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="LoginRol" />
+
+                <div class="field">
+                    <label>Código de @Model.LoginRol</label>
+                    <input asp-for="LoginCodigo" required autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label>Contraseña Operativa</label>
+                    <input asp-for="LoginClave" type="password" required />
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.MensajeError))
+                {
+                    <div class="msg-error">@Model.MensajeError</div>
+                }
+
+                <button type="submit" class="btn btn-primary btn-block">Ingresar al Sistema</button>
+            </form>
+        </div>
+    </main>
+}
+else
+{
+    <!-- ============ APLICACIÓN ============ -->
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand-row">
+                <div class="brand-icon">P</div>
+                <div>
+                    <div class="brand-name">PARKFLOW</div>
+                    <div class="brand-sub">24/7 CONTROL</div>
+                </div>
+            </div>
+
+            <nav>
+                @if (Model.UsuarioRol == "Cliente")
+                {
+                    <a class="nav-item @(Model.TabActiva == "c-panel" ? "active" : "")" asp-page="/Index" asp-route-tab="c-panel">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        Mi Panel
+                    </a>
+                    <a class="nav-item @(Model.TabActiva == "c-lavado" ? "active" : "")" asp-page="/Index" asp-route-tab="c-lavado">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/></svg>
+                        Mi Lavado
+                    </a>
+                    <a class="nav-item @(Model.TabActiva == "c-reservas" ? "active" : "")" asp-page="/Index" asp-route-tab="c-reservas">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        Mis Reservas
+                    </a>
+                    <a class="nav-item @(Model.TabActiva == "c-cuenta" ? "active" : "")" asp-page="/Index" asp-route-tab="c-cuenta">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>
+                        Mi Cuenta
+                    </a>
+                    <a class="nav-item @(Model.TabActiva == "dashboard" ? "active" : "")" asp-page="/Index" asp-route-tab="dashboard">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                        Mapa de Celdas
+                    </a>
+                }
+                else
+                {
+                    <a class="nav-item @(Model.TabActiva == "dashboard" ? "active" : "")" asp-page="/Index" asp-route-tab="dashboard">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        Dashboard Vivo
+                    </a>
+
+                    @if (Model.UsuarioRol != "Lavador")
+                    {
+                        <a class="nav-item @(Model.TabActiva == "ingreso" ? "active" : "")" asp-page="/Index" asp-route-tab="ingreso">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                            Registro Ingreso
+                        </a>
+                        <a class="nav-item @(Model.TabActiva == "reservas" ? "active" : "")" asp-page="/Index" asp-route-tab="reservas">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            Reservas Activas
+                        </a>
+                    }
+
+                    <a class="nav-item @(Model.TabActiva == "lavado" ? "active" : "")" asp-page="/Index" asp-route-tab="lavado">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/></svg>
+                        Control Lavado
+                    </a>
+
+                    @if (Model.UsuarioRol == "Administrador" || Model.UsuarioRol == "Cajero" || Model.UsuarioRol == "Operador")
+                    {
+                        <a class="nav-item @(Model.TabActiva == "caja" ? "active" : "")" asp-page="/Index" asp-route-tab="caja">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg>
+                            Liquidación &amp; Caja
+                        </a>
+                    }
+                }
+            </nav>
+
+            <div class="sidebar-spacer"></div>
+
+            <div class="user-card">
+                <div class="avatar">@Model.UsuarioRol[0]</div>
+                <div class="user-info">
+                    <div class="user-name">@Model.UsuarioRol</div>
+                    <div class="user-role"><span class="dot"></span><span>@Model.UsuarioCodigo</span></div>
+                </div>
+                <form method="post" asp-page-handler="Logout" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="icon-btn" title="Cerrar sesión">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <div class="content">
+            <header class="topbar">
+                <div>
+                    <h2>
+                        @(Model.TabActiva == "dashboard" ? "Dashboard Vivo" :
+                          Model.TabActiva == "ingreso" ? "Registro de Ingreso" :
+                          Model.TabActiva == "reservas" ? "Gestión de Reservas" :
+                          Model.TabActiva == "lavado" ? "Control de Lavado" :
+                          Model.TabActiva == "caja" ? "Liquidación & Caja" :
+                          Model.TabActiva == "c-panel" ? "Mi Panel de Cliente" :
+                          Model.TabActiva == "c-lavado" ? "Mi Lavado" :
+                          Model.TabActiva == "c-reservas" ? "Mis Reservas" :
+                          Model.TabActiva == "c-cuenta" ? "Mi Cuenta y Pagos" : "Panel ParkFlow")
+                    </h2>
+                    <p>
+                        @(Model.TabActiva == "dashboard" ? "Ocupación de celdas, lavadero y métricas en tiempo real" :
+                          Model.TabActiva == "ingreso" ? "Ingreso de vehículos y asignación automática de celdas" :
+                          Model.TabActiva == "reservas" ? "Tolerancia de 15 min (RN-03) y auditoría de inasistencia" :
+                          Model.TabActiva == "lavado" ? "Seguimiento del servicio: Pendiente → En Lavado → Listo" :
+                          Model.TabActiva == "caja" ? "Cobro consolidado de parqueadero y lavado" :
+                          Model.TabActiva == "c-panel" ? "Estado de tus vehículos en parqueadero y lavadero" :
+                          Model.TabActiva == "c-lavado" ? "Seguimiento en tiempo real de tu auto en el lavadero" :
+                          Model.TabActiva == "c-reservas" ? "Gestión y programación de reservas anticipadas" :
+                          Model.TabActiva == "c-cuenta" ? "Resumen de estancia, tarifas y comprobantes emitidos" : "ParkFlow Central")
+                    </p>
+                </div>
+                <div class="topbar-right">
+                    <div class="demo-clock">
+                        <span class="clock-label">HORA:</span>
+                        <span>@DateTime.Now.ToString("hh:mm:ss tt")</span>
+                    </div>
+                    <div class="badge sync"><span class="dot"></span>Sincronizado</div>
+                </div>
+            </header>
+
+            @if (!string.IsNullOrEmpty(Model.MensajeExito))
+            {
+                <div class="info-chip" style="background:rgba(34,197,94,0.15); border-color:var(--green); color:#86EFAC; margin:18px 32px 0;">
+                    ✓ @Model.MensajeExito
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.MensajeError))
+            {
+                <div class="msg-error" style="margin:18px 32px 0; font-size:13.5px; background:rgba(239,68,68,0.12); padding:10px 14px; border-radius:8px; border:1px solid rgba(239,68,68,0.3);">
+                    ⚠ @Model.MensajeError
+                </div>
+            }
+
+            <!-- PANTALLA: DASHBOARD -->
+            @if (Model.TabActiva == "dashboard")
+            {
+                <section class="screen active" style="display:block;">
+                    <!-- KPIs -->
+                    <div class="kpi-grid">
+                        <div class="kpi">
+                            <span class="label-caps">CELDAS LIBRES</span>
+                            <div class="val" style="color:var(--green);">@(Model.Contadores?.Disponibles ?? 0)</div>
+                            <span class="sub">de @(Model.Contadores?.Total ?? 30) totales</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="label-caps">OCUPACIÓN</span>
+                            <div class="val" style="color:var(--indigo);">@(Model.Contadores?.Ocupadas ?? 0)</div>
+                            <span class="sub">Vehículos en patio</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="label-caps">RESERVAS ACTIVAS</span>
+                            <div style="font-size:26px; font-weight:800; color:#A78BFA; margin-top:4px;">
+                                @Model.ReservasActivas.Count
+                            </div>
+                            <span class="sub">Tolerancia 15 min</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="label-caps">LAVADOS EN CURSO</span>
+                            <div style="font-size:26px; font-weight:800; color:var(--amber); margin-top:4px;">
+                                @Model.ListaServicios.Count(s => !s.Facturado)
+                            </div>
+                            <span class="sub">Activos en lavadero</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="label-caps">RECAUDO EN CAJA</span>
+                            <div class="val" style="color:#38BDF8; font-size:22px;">
+                                $@((Model.CajaActiva?.TotalRecaudado ?? 0).ToString("N0"))
+                            </div>
+                            <span class="sub">Caja abierta en turno</span>
+                        </div>
+                    </div>
+
+                    <!-- Cuadrícula de Celdas por Zona -->
+                    <div class="card" style="margin-top:20px;">
+                        <div class="card-head">
+                            <h3>Mapa de Ocupación de Celdas en Tiempo Real</h3>
+                            <div style="display:flex; gap:12px; font-size:12px;">
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--green); margin-right:4px;"></span>Libre</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--red); margin-right:4px;"></span>Ocupada</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--indigo); margin-right:4px;"></span>Reservada</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--amber); margin-right:4px;"></span>Mantenimiento</span>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:12px; margin-top:14px;">
+                            @foreach (var c in Model.Celdas)
+                            {
+                                string colorBorde = c.Estado switch
+                                {
+                                    LibParkFlow.Entidades.EstadoCelda.DISPONIBLE => "var(--green)",
+                                    LibParkFlow.Entidades.EstadoCelda.OCUPADA => "var(--red)",
+                                    LibParkFlow.Entidades.EstadoCelda.RESERVADA => "var(--indigo)",
+                                    _ => "var(--amber)"
+                                };
+
+                                string badgeColor = c.Estado switch
+                                {
+                                    LibParkFlow.Entidades.EstadoCelda.DISPONIBLE => "tag-green",
+                                    LibParkFlow.Entidades.EstadoCelda.OCUPADA => "tag-red",
+                                    LibParkFlow.Entidades.EstadoCelda.RESERVADA => "tag-blue",
+                                    _ => "tag-amber"
+                                };
+
+                                var regActual = Model.UltimosIngresos.FirstOrDefault(r => r.NumeroCelda == c.NumeroCelda);
+
+                                <div style="background:var(--surface); border:1px solid @colorBorde; border-radius:8px; padding:12px; text-align:center;">
+                                    <div style="font-size:16px; font-weight:800; color:var(--text);">@c.NumeroCelda</div>
+                                    <div style="font-size:11px; color:var(--ink-soft); margin:2px 0 6px 0;">Zona @c.Zona · @c.TipoPermitido</div>
+                                    <span class="tag @badgeColor" style="font-size:10px; padding:2px 6px;">@c.Estado</span>
+                                    @if (regActual != null)
+                                    {
+                                        <div style="margin-top:6px; font-size:11.5px; font-weight:700; color:var(--indigo);">
+                                            @regActual.Placa
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: REGISTRO DE INGRESO -->
+            @if (Model.TabActiva == "ingreso")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col">
+                        <div class="card">
+                            <div class="card-head"><h3>Registrar ingreso de vehículo</h3></div>
+                            <form method="post" asp-page-handler="RegistrarIngreso">
+                                @Html.AntiForgeryToken()
+                                <div class="field">
+                                    <label>Placa</label>
+                                    <input asp-for="IngresoPlaca" maxlength="7" placeholder="Ej. ABC123" required style="text-transform:uppercase;" />
+                                </div>
+                                <div class="field">
+                                    <label>Tipo de vehículo</label>
+                                    <select asp-for="IngresoTipo">
+                                        <option value="Automóvil">Automóvil</option>
+                                        <option value="Moto">Moto</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>Marca (Opcional)</label>
+                                    <input asp-for="IngresoMarca" placeholder="Ej. Toyota, Mazda, Chevrolet..." />
+                                </div>
+                                <div class="field">
+                                    <label>Modelo (Opcional)</label>
+                                    <input asp-for="IngresoModelo" placeholder="Ej. Corolla, 3, Onix..." />
+                                </div>
+                                <div class="field">
+                                    <label>Celda asignada</label>
+                                    <select asp-for="IngresoCelda">
+                                        <option value="">-- Asignación automática inteligente --</option>
+                                        @foreach (var c in Model.CeldasDisponibles)
+                                        {
+                                            <option value="@c.NumeroCelda">@c.NumeroCelda (Zona @c.Zona - @c.TipoPermitido)</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="field" style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+                                    <input type="checkbox" asp-for="IngresoSolicitarLavado" id="chkLavado" style="width:18px; height:18px; cursor:pointer;" />
+                                    <label for="chkLavado" style="margin:0; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--text);">
+                                        Solicitar servicio de lavado al ingresar (+$25.000)
+                                    </label>
+                                </div>
+
+                                <div class="btn-row" style="margin-top:14px;">
+                                    <button type="submit" class="btn btn-primary">Confirmar Ingreso</button>
+                                </div>
+                            </form>
+
+                            @if (Model.TicketGenerado != null)
+                            {
+                                <div style="margin-top:20px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                                    <div style="font-size:12px; font-weight:800; color:var(--green); margin-bottom:6px;">✓ TICKET DE INGRESO GENERADO</div>
+                                    <div style="font-size:18px; font-weight:800; color:var(--indigo); margin-bottom:8px;">Ticket #@Model.TicketGenerado.IdRegistro</div>
+                                    <div style="font-size:13px; line-height:1.7;">
+                                        <div><b>Placa:</b> @Model.TicketGenerado.Placa</div>
+                                        <div><b>Celda:</b> @Model.TicketGenerado.NumeroCelda</div>
+                                        <div><b>Tipo:</b> @Model.TicketGenerado.TipoVehiculo</div>
+                                        @if (!string.IsNullOrEmpty(Model.TicketGenerado.Marca))
+                                        {
+                                            <div><b>Marca/Modelo:</b> @Model.TicketGenerado.Marca @Model.TicketGenerado.Modelo</div>
+                                        }
+                                        <div><b>Hora:</b> @Model.TicketGenerado.FechaHoraEntrada.ToString("hh:mm:ss tt")</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card">
+                            <div class="card-head"><h3>Vehículos Activos en Parqueadero (@Model.UltimosIngresos.Count)</h3></div>
+                            <div class="table-wrap" style="max-height:480px; overflow-y:auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>PLACA</th>
+                                            <th>CELDA</th>
+                                            <th>INGRESO</th>
+                                            <th>ESTADO</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.UltimosIngresos.Any())
+                                        {
+                                            @foreach (var r in Model.UltimosIngresos)
+                                            {
+                                                <tr>
+                                                    <td><b>@r.Placa</b></td>
+                                                    <td>@r.NumeroCelda</td>
+                                                    <td>@r.FechaHoraEntrada.ToString("hh:mm tt")</td>
+                                                    <td>
+                                                        @if (r.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                                        {
+                                                            <span class="tag tag-amber">En patio</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="tag tag-green">Pagado</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="4" class="empty">No hay vehículos ingresados actualmente.</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: LAVADO -->
+            @if (Model.TabActiva == "lavado")
+            {
+                <section class="screen active" style="display:block;">
+                    @if (Model.UsuarioRol != "Lavador")
+                    {
+                        <div class="card mb-4" style="margin-bottom:20px;">
+                            <div class="card-head"><h3>Solicitar servicio de lavado</h3></div>
+                            <form method="post" asp-page-handler="SolicitarLavado" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <div class="field grow">
+                                    <label>Placa del vehículo en parqueadero</label>
+                                    <input asp-for="LavadoPlaca" placeholder="Ej. ABC123" required style="text-transform:uppercase;" list="placasEnParqueadero" />
+                                    <datalist id="placasEnParqueadero">
+                                        @foreach (var r in Model.UltimosIngresos)
+                                        {
+                                            <option value="@r.Placa">@r.Placa (Celda @r.NumeroCelda)</option>
+                                        }
+                                    </datalist>
+                                </div>
+                                <div class="field">
+                                    <label>Servicio</label>
+                                    <div class="static-field">Lavado General · $25.000</div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Solicitar lavado</button>
+                            </form>
+                        </div>
+                    }
+
+                    <div class="kanban">
+                        <!-- PENDIENTE -->
+                        @{
+                            var pend = Model.ListaServicios.Where(s => s.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.PENDIENTE).OrderBy(s => s.FechaHoraSolicitud).ToList();
+                            var enLav = Model.ListaServicios.Where(s => s.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.EN_LAVADO).OrderBy(s => s.FechaHoraSolicitud).ToList();
+                            var listos = Model.ListaServicios.Where(s => s.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.LISTO).OrderBy(s => s.FechaHoraSolicitud).ToList();
+                        }
+
+                        <div class="kcol">
+                            <div class="kcol-title amber">
+                                <span>● PENDIENTE</span>
+                                <span>@pend.Count</span>
+                            </div>
+                            @if (pend.Any())
+                            {
+                                @foreach (var l in pend)
+                                {
+                                    <div class="kcard">
+                                        <div class="plate">@l.Placa</div>
+                                        <div class="svc">
+                                            @l.TipoLavado<br />
+                                            Solicitado @l.FechaHoraSolicitud.ToString("hh:mm tt")
+                                        </div>
+                                        <form method="post" asp-page-handler="AvanzarLavado">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@l.IdServicio" />
+                                            <button type="submit" class="btn btn-outline btn-sm btn-block">Iniciar lavado</button>
+                                        </form>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="empty">Sin servicios pendientes.</div>
+                            }
+                        </div>
+
+                        <!-- EN LAVADO -->
+                        <div class="kcol">
+                            <div class="kcol-title blue">
+                                <span>● EN LAVADO</span>
+                                <span>@enLav.Count</span>
+                            </div>
+                            @if (enLav.Any())
+                            {
+                                @foreach (var l in enLav)
+                                {
+                                    <div class="kcard">
+                                        <div class="plate">@l.Placa</div>
+                                        <div class="svc">
+                                            @l.TipoLavado<br />
+                                            Solicitado @l.FechaHoraSolicitud.ToString("hh:mm tt")
+                                            @(l.FechaHoraInicio.HasValue ? $" · Inicio {l.FechaHoraInicio.Value:hh:mm tt}" : "")
+                                        </div>
+                                        <form method="post" asp-page-handler="AvanzarLavado">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@l.IdServicio" />
+                                            <button type="submit" class="btn btn-primary btn-sm btn-block">Marcar como Listo</button>
+                                        </form>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="empty">Sin servicios en lavado.</div>
+                            }
+                        </div>
+
+                        <!-- LISTO -->
+                        <div class="kcol">
+                            <div class="kcol-title green">
+                                <span>● LISTO</span>
+                                <span>@listos.Count</span>
+                            </div>
+                            @if (listos.Any())
+                            {
+                                @foreach (var l in listos)
+                                {
+                                    <div class="kcard">
+                                        <div class="plate">@l.Placa</div>
+                                        <div class="svc">
+                                            @l.TipoLavado<br />
+                                            Solicitado @l.FechaHoraSolicitud.ToString("hh:mm tt")
+                                            @(l.FechaHoraInicio.HasValue ? $" · Inicio {l.FechaHoraInicio.Value:hh:mm tt}" : "")
+                                            @(l.FechaHoraFin.HasValue ? $" · Fin {l.FechaHoraFin.Value:hh:mm tt}" : "")
+                                        </div>
+                                        @if (l.Facturado)
+                                        {
+                                            <span class="tag tag-gray">Facturado en Caja</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="tag tag-green">Listo para cobrar</span>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="empty">Sin servicios terminados.</div>
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: LIQUIDACIÓN & CAJA -->
+            @if (Model.TabActiva == "caja")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col two-col-wide">
+                        <div>
+                            <!-- Buscador de cuenta -->
+                            <div class="card mb-4" style="margin-bottom:20px;">
+                                <div class="card-head"><h3>Consultar cuenta por placa</h3></div>
+                                <form method="post" asp-page-handler="ConsultarCuenta" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <div class="field grow">
+                                        <input asp-for="CajaPlaca" maxlength="7" placeholder="Ej. DEF456" required style="text-transform:uppercase;" />
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Consultar</button>
+                                </form>
+                            </div>
+
+                            <!-- Detalle de la cuenta liquidada -->
+                            @if (Model.CuentaConsultada != null)
+                            {
+                                var c = Model.CuentaConsultada.Value;
+                                var (min, hrs, fracs, _) = c.reg.CalcularTarifaParqueadero();
+
+                                <div class="card">
+                                    <div class="card-head">
+                                        <div>
+                                            <h3 style="font-size:22px; font-weight:800; color:var(--indigo);">@c.reg.Placa</h3>
+                                            <div style="font-size:13px; color:var(--ink-soft); margin-top:2px;">
+                                                Ticket #@c.reg.IdRegistro · @(c.reg.Vehiculo?.TipoVehiculo ?? "Vehículo") @c.reg.Vehiculo?.Marca @c.reg.Vehiculo?.Modelo
+                                            </div>
+                                        </div>
+                                        @if (c.reg.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                        {
+                                            <span class="tag tag-amber">PENDIENTE DE PAGO</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="tag tag-green">PAGADO</span>
+                                        }
+                                    </div>
+
+                                    <div class="meta" style="font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:12px;">
+                                        Celda @c.reg.NumeroCelda · Entrada: @c.reg.FechaHoraEntrada.ToString("hh:mm tt")
+                                    </div>
+
+                                    <div class="line" style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:13.5px;">
+                                        <span>Estadía parqueadero (@min min · @hrs h @fracs frac.)</span>
+                                        <b>$@c.parq.ToString("N0")</b>
+                                    </div>
+
+                                    @if (min < 5)
+                                    {
+                                        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">
+                                            ℹ️ Estadía menor a 5 min: Periodo de gracia sin cobro (Regla RN-01: $3.000/h, $750/fracción).
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">
+                                            ℹ️ Tarifa liquidada según Regla RN-01 ($3.000 por hora y $750 por fracción de 15 min).
+                                        </div>
+                                    }
+
+                                    @foreach (var lav in c.facturables)
+                                    {
+                                        <div class="line" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13.5px; color:var(--green);">
+                                            <span>✨ @lav.TipoLavado (Listo)</span>
+                                            <b>$@lav.PrecioBase.ToString("N0")</b>
+                                        </div>
+                                    }
+
+                                    @if (c.enCurso.Any())
+                                    {
+                                        <div class="msg-error">
+                                            Hay un lavado en curso (@c.enCurso.First().EstadoLavado). Debe completarse antes de cobrar.
+                                        </div>
+                                    }
+
+                                    <div class="total" style="display:flex; justify-content:space-between; font-size:17px; font-weight:800; border-top:1px solid var(--border); padding-top:12px; margin-top:12px;">
+                                        <span>Total a pagar:</span>
+                                        <span style="color:var(--indigo);">$@c.total.ToString("N0")</span>
+                                    </div>
+
+                                    @if (c.reg.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                    {
+                                        <form method="post" asp-page-handler="ConfirmarPago" style="margin-top:18px;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="placa" value="@c.reg.Placa" />
+
+                                            <div class="label-caps">MÉTODO DE PAGO</div>
+                                            <div class="field" style="margin-bottom:14px;">
+                                                <select name="metodo" class="form-select">
+                                                    <option value="Efectivo">Efectivo</option>
+                                                    <option value="Tarjeta">Tarjeta Débito / Crédito</option>
+                                                    <option value="Transferencia">Transferencia Bancaria / QR</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="label-caps">VALOR RECIBIDO (EFECTIVO)</div>
+                                            <div class="field" style="margin-bottom:14px;">
+                                                <input type="number" step="1000" name="valorRecibido" placeholder="Monto recibido (opcional)" class="form-input" />
+                                                <small style="color:var(--ink-soft); font-size:11px; display:block; margin-top:4px;">Si se deja vacío, el sistema asume pago exacto por $@c.total.ToString("N0").</small>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary btn-block" disabled="@c.enCurso.Any()">
+                                                Confirmar Pago
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="AutorizarSalida" style="margin-top:18px;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="placa" value="@c.reg.Placa" />
+                                            <button type="submit" class="btn btn-primary btn-block" style="background:var(--green);">
+                                                Autorizar Salida
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            }
+
+                            <!-- Cuentas Abiertas -->
+                            <div class="cuenta" style="margin-top:20px;">
+                                <div class="card-head"><h3>Cuentas abiertas en parqueadero (@Model.CuentasAbiertas.Count)</h3></div>
+                                @if (Model.CuentasAbiertas.Any())
+                                {
+                                    <div class="table-wrap">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>PLACA</th>
+                                                    <th>CELDA</th>
+                                                    <th>ENTRADA</th>
+                                                    <th>ESTADÍA</th>
+                                                    <th>ESTADO</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var ca in Model.CuentasAbiertas)
+                                                {
+                                                    <tr>
+                                                        <td><b>@ca.Placa</b></td>
+                                                        <td>@ca.NumeroCelda</td>
+                                                        <td>@ca.FechaHoraEntrada.ToString("hh:mm tt")</td>
+                                                        <td>@ca.CalcularTiempoEstadia() min</td>
+                                                        <td>
+                                                            @if (ca.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                                            {
+                                                                <span class="tag tag-amber">Activo</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="tag tag-green">Pagado</span>
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <a class="btn btn-outline btn-sm" asp-page="/Index" asp-route-tab="caja" asp-route-placa="@ca.Placa">
+                                                                Liquidar
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty">No hay cuentas abiertas.</div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Panel de Arqueo de Caja -->
+                        <div class="card">
+                            <div class="card-head"><h3>Arqueo de caja activo</h3></div>
+                            <div class="stat">
+                                <span>Apertura de caja</span>
+                                <b>@(Model.CajaActiva != null ? Model.CajaActiva.FechaApertura.ToString("hh:mm tt") : "--:--")</b>
+                            </div>
+                            <div class="stat">
+                                <span>Estado de la caja</span>
+                                <b>@(Model.CajaActiva != null ? "ABIERTA" : "CERRADA")</b>
+                            </div>
+                            <div class="stat">
+                                <span>Total recaudado en turno</span>
+                                <b style="color:var(--green); font-size:18px;">$@((Model.CajaActiva?.TotalRecaudado ?? 0).ToString("N0"))</b>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: RESERVAS -->
+            @if (Model.TabActiva == "reservas")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col two-col-wide">
+                        <div class="card">
+                            <div class="card-head"><h3>Reservas registradas (@Model.ReservasActivas.Count)</h3><span class="hint">Tolerancia: 15 min</span></div>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>PLACA</th>
+                                            <th>CELDA</th>
+                                            <th>HORA</th>
+                                            <th>ESTADO</th>
+                                            <th>ACCIÓN</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.ReservasActivas.Any())
+                                        {
+                                            @foreach (var res in Model.ReservasActivas)
+                                            {
+                                                <tr>
+                                                    <td><b>@res.Placa</b></td>
+                                                    <td>@res.NumeroCelda</td>
+                                                    <td>@res.FechaHoraReserva.ToString("hh:mm tt")</td>
+                                                    <td><span class="tag tag-amber">@res.EstadoReserva</span></td>
+                                                    <td>
+                                                        <form method="post" asp-page-handler="EliminarReserva" style="display:inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@res.IdReserva" />
+                                                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="5" class="empty">No hay reservas activas.</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <form method="post" asp-page-handler="VerificarVencimientos" class="mt" style="margin-top:16px;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline btn-block">Verificar reservas vencidas ahora (RN-03)</button>
+                            </form>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-head"><h3>Crear reserva (Operador)</h3></div>
+                            <form method="post" asp-page-handler="CrearReserva">
+                                @Html.AntiForgeryToken()
+                                <div class="field">
+                                    <label>Placa</label>
+                                    <input asp-for="ReservaPlaca" maxlength="7" placeholder="Ej. XYZ789" required style="text-transform:uppercase;" />
+                                </div>
+                                <div class="field">
+                                    <label>Celda</label>
+                                    <select asp-for="ReservaCelda" required>
+                                        <option value="">-- Seleccione una celda libre --</option>
+                                        @foreach (var c in Model.CeldasDisponibles)
+                                        {
+                                            <option value="@c.NumeroCelda">@c.NumeroCelda (Zona @c.Zona)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>Hora de reserva</label>
+                                    <input asp-for="ReservaHora" type="time" required />
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Crear reserva</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card mt" style="margin-top:20px;">
+                        <div class="card-head"><h3>Registro de auditoría (cancelaciones automáticas por inasistencia)</h3></div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>FECHA/HORA</th>
+                                        <th>PLACA</th>
+                                        <th>CELDA</th>
+                                        <th>DETALLE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.AuditoriaReservas.Any())
+                                    {
+                                        @foreach (var aud in Model.AuditoriaReservas)
+                                        {
+                                            <tr>
+                                                <td>@aud.FechaHora.ToString("dd/MM hh:mm tt")</td>
+                                                <td><b>@aud.Placa</b></td>
+                                                <td>@aud.NumeroCelda</td>
+                                                <td style="color:var(--amber)">@aud.Evento: @aud.Detalles</td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="4" class="empty">Sin cancelaciones registradas todavía.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: CLIENTE - MI PANEL -->
+            @if (Model.TabActiva == "c-panel")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col two-col-wide">
+                        <!-- Mis Vehículos -->
+                        <div class="card">
+                            <div class="card-head">
+                                <h3>Mis Vehículos Registrados (@Model.VehiculosCliente.Count)</h3>
+                                <span class="hint">Cliente: @Model.ClienteActual?.Nombre</span>
+                            </div>
+                            @if (Model.VehiculosCliente.Any())
+                            {
+                                <div style="display:flex; flex-direction:column; gap:14px;">
+                                    @foreach (var veh in Model.VehiculosCliente)
+                                    {
+                                        var regActivo = Model.RegistrosCliente.FirstOrDefault(r => r.Placa.Equals(veh.Placa, StringComparison.OrdinalIgnoreCase));
+                                        var lavadoActivo = Model.LavadosCliente.FirstOrDefault(l => l.Placa.Equals(veh.Placa, StringComparison.OrdinalIgnoreCase) && !l.Facturado);
+
+                                        <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                                <div style="font-size:20px; font-weight:800; color:var(--indigo);">@veh.Placa</div>
+                                                <span class="tag tag-blue">@veh.TipoVehiculo</span>
+                                            </div>
+                                            <div style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">
+                                                <b>Marca / Modelo:</b> @(string.IsNullOrEmpty(veh.Marca) ? "No especificada" : $"{veh.Marca} {veh.Modelo}")
+                                            </div>
+
+                                            <!-- Estado en Parqueadero -->
+                                            <div style="font-size:13px; margin-bottom:10px;">
+                                                <b>Estado Parqueadero:</b>
+                                                @if (regActivo != null)
+                                                {
+                                                    <span class="tag tag-green">Estacionado en Celda @regActivo.NumeroCelda</span>
+                                                    <span style="font-size:12px; color:var(--ink-soft); margin-left:6px;">(Ingreso: @regActivo.FechaHoraEntrada.ToString("hh:mm tt") · Estadía: @regActivo.CalcularTiempoEstadia() min)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="tag tag-gray">Fuera de parqueadero</span>
+                                                }
+                                            </div>
+
+                                            <!-- Estado en Lavadero -->
+                                            <div style="font-size:13px; padding-top:8px; border-top:1px solid var(--border);">
+                                                <b>Estado en Lavadero:</b>
+                                                @if (lavadoActivo != null)
+                                                {
+                                                    @if (lavadoActivo.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.PENDIENTE)
+                                                    {
+                                                        <span class="tag tag-amber">PENDIENTE DE INICIAR</span>
+                                                        <span style="font-size:12px; color:var(--ink-soft); margin-left:6px;">En cola de espera</span>
+                                                    }
+                                                    else if (lavadoActivo.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.EN_LAVADO)
+                                                    {
+                                                        <span class="tag tag-blue">EN PROCESO DE LAVADO</span>
+                                                        <span style="font-size:12px; color:var(--indigo); margin-left:6px;">Tu auto se está lavando ahora</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="tag tag-green">LISTO PARA RECOGER</span>
+                                                        <span style="font-size:12px; color:var(--green); margin-left:6px;">¡Servicio finalizado!</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="tag tag-gray">Sin servicio de lavado activo</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty">No tienes vehículos registrados en tu cuenta.</div>
+                            }
+
+                            <!-- Formulario para Registrar / Vincular Nuevo Vehículo -->
+                            <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+                                <h4 style="margin:0 0 10px 0; font-size:14px; font-weight:700; color:var(--indigo);">+ Registrar / Vincular Vehículo a mi Cuenta</h4>
+                                <form method="post" asp-page-handler="RegistrarVehiculoCliente" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                    @Html.AntiForgeryToken()
+                                    <div class="field" style="margin-bottom:0;">
+                                        <label style="font-size:11px;">PLACA</label>
+                                        <input type="text" asp-for="NuevoVehiculoPlaca" placeholder="Ej. COL123" maxlength="10" required style="text-transform:uppercase;" class="form-input" />
+                                    </div>
+                                    <div class="field" style="margin-bottom:0;">
+                                        <label style="font-size:11px;">TIPO</label>
+                                        <select asp-for="NuevoVehiculoTipo" class="form-select">
+                                            <option value="Automóvil">Automóvil</option>
+                                            <option value="Moto">Moto</option>
+                                        </select>
+                                    </div>
+                                    <div class="field" style="margin-bottom:0;">
+                                        <label style="font-size:11px;">MARCA (OPCIONAL)</label>
+                                        <input type="text" asp-for="NuevoVehiculoMarca" placeholder="Ej. Mazda" maxlength="50" class="form-input" />
+                                    </div>
+                                    <div class="field" style="margin-bottom:0;">
+                                        <label style="font-size:11px;">MODELO (OPCIONAL)</label>
+                                        <input type="text" asp-for="NuevoVehiculoModelo" placeholder="Ej. 3 o CX-30" maxlength="50" class="form-input" />
+                                    </div>
+                                    <div style="grid-column:1 / -1; margin-top:4px;">
+                                        <button type="submit" class="btn btn-primary btn-sm btn-block">Guardar Vehículo</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Accesos Rápidos y Servicios -->
+                        <div class="card">
+                            <div class="card-head"><h3>Servicios para tus Vehículos</h3></div>
+                            <div style="display:flex; flex-direction:column; gap:16px;">
+                                <div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.25); border-radius:10px; padding:16px;">
+                                    <h4 style="margin:0 0 6px 0; color:var(--indigo); font-size:15px;">🚗 Seguimiento de Lavado en Vivo</h4>
+                                    <p style="margin:0 0 12px 0; font-size:13px; color:var(--ink-soft);">
+                                        Consulta el avance en tiempo real de tu auto en el lavadero (Pendiente &rarr; En Lavado &rarr; Listo) o solicita un nuevo lavado.
+                                    </p>
+                                    <a class="btn btn-primary btn-sm" asp-page="/Index" asp-route-tab="c-lavado">Ver mi Lavadero</a>
+                                </div>
+
+                                <div style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:10px; padding:16px;">
+                                    <h4 style="margin:0 0 6px 0; color:var(--green); font-size:15px;">📅 Reservar Celda con Anticipación</h4>
+                                    <p style="margin:0 0 12px 0; font-size:13px; color:var(--ink-soft);">
+                                        Asegura un espacio reservado para tu vehículo con tolerancia de 15 minutos (Regla RN-03).
+                                    </p>
+                                    <a class="btn btn-outline btn-sm" asp-page="/Index" asp-route-tab="c-reservas">Gestionar Mis Reservas</a>
+                                </div>
+
+                                <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:16px;">
+                                    <h4 style="margin:0 0 6px 0; color:#38BDF8; font-size:15px;">💳 Mi Cuenta y Pagos</h4>
+                                    <p style="margin:0 0 12px 0; font-size:13px; color:var(--ink-soft);">
+                                        Consulta tu saldo acumulado por estancia y servicios de lavado terminados.
+                                    </p>
+                                    <a class="btn btn-outline btn-sm" asp-page="/Index" asp-route-tab="c-cuenta">Ver mi Cuenta</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: CLIENTE - MI LAVADO -->
+            @if (Model.TabActiva == "c-lavado")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col two-col-wide">
+                        <!-- Estado en Vivo del Lavadero -->
+                        <div class="card">
+                            <div class="card-head">
+                                <h3>Estado de tu auto en el lavadero</h3>
+                                <span class="hint">Seguimiento en tiempo real</span>
+                            </div>
+                            @{
+                                var misLavados = Model.LavadosCliente.Where(l => !l.Facturado).ToList();
+                            }
+                            @if (misLavados.Any())
+                            {
+                                @foreach (var lav in misLavados)
+                                {
+                                    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                                            <div>
+                                                <span style="font-size:22px; font-weight:800; color:var(--indigo);">@lav.Placa</span>
+                                                <span style="font-size:13px; color:var(--ink-soft); margin-left:8px;">@lav.TipoLavado · $@lav.PrecioBase.ToString("N0")</span>
+                                            </div>
+                                            @if (lav.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.PENDIENTE)
+                                            {
+                                                <span class="tag tag-amber" style="font-size:13px; padding:6px 12px;">● PENDIENTE</span>
+                                            }
+                                            else if (lav.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.EN_LAVADO)
+                                            {
+                                                <span class="tag tag-blue" style="font-size:13px; padding:6px 12px;">● EN LAVADO</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="tag tag-green" style="font-size:13px; padding:6px 12px;">● LISTO PARA RECOGER</span>
+                                            }
+                                        </div>
+
+                                        <!-- Barra de Progreso Visual -->
+                                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:16px 0;">
+                                            <div style="background:var(--amber); height:8px; border-radius:4px;"></div>
+                                            <div style="background:@(lav.EstadoLavado >= LibParkFlow.Entidades.EstadoLavado.EN_LAVADO ? "var(--indigo)" : "var(--border)"); height:8px; border-radius:4px;"></div>
+                                            <div style="background:@(lav.EstadoLavado >= LibParkFlow.Entidades.EstadoLavado.LISTO ? "var(--green)" : "var(--border)"); height:8px; border-radius:4px;"></div>
+                                        </div>
+
+                                        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-soft);">
+                                            <span>1. Solicitado (@lav.FechaHoraSolicitud.ToString("hh:mm tt"))</span>
+                                            <span>2. En Lavado @(lav.FechaHoraInicio.HasValue ? $"({lav.FechaHoraInicio.Value:hh:mm tt})" : "")</span>
+                                            <span>3. Listo @(lav.FechaHoraFin.HasValue ? $"({lav.FechaHoraFin.Value:hh:mm tt})" : "")</span>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="empty" style="padding:40px 20px;">
+                                    <div style="font-size:32px; margin-bottom:8px;">🚿</div>
+                                    <div style="font-size:16px; font-weight:700; margin-bottom:4px;">No tienes vehículos en el lavadero</div>
+                                    <p style="font-size:13px; color:var(--ink-soft); margin:0;">
+                                        Si tu vehículo se encuentra en el parqueadero, puedes solicitar el servicio de lavado general usando el formulario a la derecha.
+                                    </p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Solicitar Lavado -->
+                        <div class="card">
+                            <div class="card-head"><h3>Solicitar servicio de lavado</h3><span class="hint">Tarifa fija: $25.000</span></div>
+                            <p style="font-size:13px; color:var(--ink-soft); margin-bottom:14px;">
+                                Según la regla RN-05, solo puedes solicitar lavado si tu vehículo se encuentra actualmente ingresado en el parqueadero.
+                            </p>
+                            @{
+                                var vehiculosParqueados = Model.VehiculosCliente
+                                    .Where(v => Model.RegistrosCliente.Any(r => r.Placa.Equals(v.Placa, StringComparison.OrdinalIgnoreCase)))
+                                    .ToList();
+                            }
+                            @if (vehiculosParqueados.Any())
+                            {
+                                <form method="post" asp-page-handler="SolicitarLavadoCliente">
+                                    @Html.AntiForgeryToken()
+                                    <div class="field">
+                                        <label>Selecciona tu vehículo estacionado</label>
+                                        <select name="placa" class="form-select" required>
+                                            @foreach (var vp in vehiculosParqueados)
+                                            {
+                                                var reg = Model.RegistrosCliente.First(r => r.Placa.Equals(vp.Placa, StringComparison.OrdinalIgnoreCase));
+                                                <option value="@vp.Placa">@vp.Placa - @vp.Marca @vp.Modelo (Celda @reg.NumeroCelda)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label>Servicio seleccionado</label>
+                                        <div class="static-field">Lavado General · $25.000</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block">Confirmar Solicitud de Lavado</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <div style="background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.25); border-radius:8px; padding:14px; font-size:13px; color:#FDE047;">
+                                    ⚠ Tus vehículos no registran estancia activa en el parqueadero en este momento. Al ingresar al parqueadero podrás solicitar el servicio de lavado.
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: CLIENTE - MIS RESERVAS -->
+            @if (Model.TabActiva == "c-reservas")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col two-col-wide">
+                        <div class="card">
+                            <div class="card-head"><h3>Mis Reservas Activas (@Model.ReservasCliente.Count)</h3><span class="hint">Tolerancia: 15 min</span></div>
+                            @if (Model.ReservasCliente.Any())
+                            {
+                                <div class="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>PLACA</th>
+                                                <th>CELDA</th>
+                                                <th>HORA PROGRAMADA</th>
+                                                <th>ESTADO</th>
+                                                <th>ACCIÓN</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var r in Model.ReservasCliente)
+                                            {
+                                                <tr>
+                                                    <td><b>@r.Placa</b></td>
+                                                    <td>@r.NumeroCelda</td>
+                                                    <td>@r.FechaHoraReserva.ToString("hh:mm tt")</td>
+                                                    <td><span class="tag tag-amber">@r.EstadoReserva</span></td>
+                                                    <td>
+                                                        <form method="post" asp-page-handler="EliminarReservaCliente" style="display:inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@r.IdReserva" />
+                                                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty">No tienes reservas activas en este momento.</div>
+                            }
+                        </div>
+
+                        <div class="card">
+                            <div class="card-head"><h3>Crear Nueva Reserva</h3><span class="hint">Regla RN-03</span></div>
+                            <form method="post" asp-page-handler="CrearReservaCliente">
+                                @Html.AntiForgeryToken()
+                                <div class="field">
+                                    <label>Vehículo a reservar</label>
+                                    <select name="placa" class="form-select" required>
+                                        @foreach (var v in Model.VehiculosCliente)
+                                        {
+                                            <option value="@v.Placa">@v.Placa (@v.Marca @v.Modelo)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>Celda disponible</label>
+                                    <select name="celda" class="form-select" required>
+                                        @foreach (var c in Model.CeldasDisponibles)
+                                        {
+                                            <option value="@c.NumeroCelda">@c.NumeroCelda (Zona @c.Zona)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label>Hora programada</label>
+                                    <input type="time" name="hora" value="14:00" class="form-control" required />
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Confirmar Reserva</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- PANTALLA: CLIENTE - MI CUENTA Y PAGOS -->
+            @if (Model.TabActiva == "c-cuenta")
+            {
+                <section class="screen active" style="display:block;">
+                    <div class="two-col two-col-wide">
+                        <div class="card">
+                            <div class="card-head"><h3>Mis Cuentas de Parqueadero</h3></div>
+                            @if (Model.RegistrosCliente.Any())
+                            {
+                                @foreach (var reg in Model.RegistrosCliente)
+                                {
+                                    var (min, hrs, fracs, tarifa) = reg.CalcularTarifaParqueadero();
+                                    var lavadosTerminados = Model.LavadosCliente.Where(l => l.Placa == reg.Placa && l.EstadoLavado == LibParkFlow.Entidades.EstadoLavado.LISTO && !l.Facturado).ToList();
+                                    var totalCuenta = tarifa + lavadosTerminados.Sum(l => l.PrecioBase);
+
+                                    <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:12px;">
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                            <b style="font-size:16px; color:var(--indigo);">@reg.Placa (Celda @reg.NumeroCelda)</b>
+                                            @if (reg.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                            {
+                                                <span class="tag tag-amber">En patio</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="tag tag-green">Pagado</span>
+                                            }
+                                        </div>
+                                        <div style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">
+                                            Entrada: @reg.FechaHoraEntrada.ToString("hh:mm tt") · Estadía: @min min (@hrs h @fracs frac.)
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:4px;">
+                                            <span>Parqueadero (RN-01):</span>
+                                            <b>$@tarifa.ToString("N0")</b>
+                                        </div>
+                                        @foreach (var l in lavadosTerminados)
+                                        {
+                                            <div style="display:flex; justify-content:space-between; font-size:13.5px; color:var(--green); margin-bottom:4px;">
+                                                <span>✨ @l.TipoLavado:</span>
+                                                <b>$@l.PrecioBase.ToString("N0")</b>
+                                            </div>
+                                        }
+                                        <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:800; border-top:1px solid var(--border); padding-top:8px; margin-top:8px;">
+                                            <span>Total a pagar:</span>
+                                            <span style="color:var(--indigo);">$@totalCuenta.ToString("N0")</span>
+                                        </div>
+
+                                        @if (reg.EstadoRegistro == LibParkFlow.Entidades.EstadoRegistro.ACTIVO)
+                                        {
+                                            <form method="post" asp-page-handler="PagarEnLineaCliente" style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--border);">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="placa" value="@reg.Placa" />
+                                                <div style="font-size:11px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">PAGO EN LÍNEA (HU-05)</div>
+                                                <div style="display:flex; gap:10px; align-items:center;">
+                                                    <select name="metodo" class="form-select" style="font-size:13px; padding:6px 10px;">
+                                                        <option value="Tarjeta">Tarjeta Débito / Crédito</option>
+                                                        <option value="Transferencia">Transferencia Bancaria / QR</option>
+                                                    </select>
+                                                    <button type="submit" class="btn btn-primary btn-sm" style="white-space:nowrap;">Pagar en línea</button>
+                                                </div>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <div style="margin-top:12px; padding:10px 14px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:8px; font-size:12.5px; color:var(--green);">
+                                                ✓ Pago registrado en línea. Presenta tu comprobante al operador en portería para autorizar la salida de tu vehículo.
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="empty">No tienes vehículos con estancia activa en el parqueadero.</div>
+                            }
+                        </div>
+
+                        <!-- Columna Derecha: Comprobantes Emitidos y Tarifas -->
+                        <div>
+                            <div class="card mb-4" style="margin-bottom:20px;">
+                                <div class="card-head"><h3>Mis Comprobantes Emitidos</h3></div>
+                                @if (Model.ComprobantesCliente.Any())
+                                {
+                                    <div class="table-wrap">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>FACTURA</th>
+                                                    <th>PLACA</th>
+                                                    <th>MÉTODO</th>
+                                                    <th>TOTAL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var comp in Model.ComprobantesCliente)
+                                                {
+                                                    <tr>
+                                                        <td><b>@comp.NumeroFactura</b></td>
+                                                        <td>@(comp.Registro?.Placa ?? "N/A")</td>
+                                                        <td><span class="tag tag-blue">@comp.MetodoPago</span></td>
+                                                        <td style="color:var(--green); font-weight:700;">$@comp.TotalPagar.ToString("N0")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty">Aún no tienes comprobantes de pago emitidos.</div>
+                                }
+                            </div>
+
+                            <div class="card">
+                                <div class="card-head"><h3>Información de Tarifas y Reglas</h3></div>
+                                <div style="font-size:13.5px; line-height:1.7; color:var(--ink-soft);">
+                                    <p><b>Regla RN-01 (Tarifa Parqueadero):</b> $3.000 por hora con fracciones de 15 minutos ($750). Los primeros 5 minutos cuentan como periodo de gracia sin cobro.</p>
+                                    <p><b>Regla RN-05 (Lavado de Vehículo):</b> Tarifa fija de $25.000 para Lavado General. Se consolida en caja junto con tu tiempo de parqueadero.</p>
+                                    <p><b>Regla RN-03 (Tolerancia en Reservas):</b> Cuentas con 15 minutos de margen a partir de la hora de tu reserva antes de ser liberada.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+        </div>
+    </div>
+}

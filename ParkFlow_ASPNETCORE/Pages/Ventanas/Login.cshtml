@@ -1,0 +1,59 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.LoginModel
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="fw-bold mb-1"><i class="fas fa-parking me-2"></i>ParkFlow Central</h3>
+                    <p class="mb-0 small opacity-75">Autenticación y Roles Operativos (Factory Method)</p>
+                </div>
+                <div class="card-body p-4">
+                    @if (ViewData["MensajeExito"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>@ViewData["MensajeExito"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (ViewData["MensajeError"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>@ViewData["MensajeError"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form method="POST">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código Operativo</label>
+                            <input class="form-control form-control-lg" asp-for="CodigoOperativo" placeholder="Ej. OP-2094, CJ-3310, AD-1001" required />
+                            <small class="text-muted">Ejemplos: AD-1001 (Admin), OP-2094 (Operador), CJ-3310 (Cajero), LV-4125 (Lavador), CL-5001 (Cliente)</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Contraseña</label>
+                            <input class="form-control form-control-lg" type="password" asp-for="Contrasena" placeholder="Contraseña" required />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold" asp-page-handler="BtIngresar">
+                                <i class="fas fa-sign-in-alt me-2"></i>Ingresar al Sistema
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">Conexión directa vía <strong>LibPresentaciones &rarr; API REST &rarr; SQL Server DEV1</strong></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

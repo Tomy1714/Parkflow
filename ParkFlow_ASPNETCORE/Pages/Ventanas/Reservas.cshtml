@@ -1,0 +1,146 @@
+@page
+@model ParkFlow_ASPNETCORE.Pages.Ventanas.ReservasModel
+@{
+    ViewData["Title"] = "Gestión de Reservas";
+    ViewData["Subtitle"] = "Creación, tolerancia de 15 minutos (RN-03) y auditoría de cancelaciones";
+}
+
+<div class="two-col">
+    <!-- Columna izquierda: Formulario de creación de reservas -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Crear Nueva Reserva</h3>
+        </div>
+
+        <form method="post" asp-page-handler="BtCrearReserva">
+            @Html.AntiForgeryToken()
+
+            <div class="field">
+                <label>Placa del Vehículo</label>
+                <input type="text" asp-for="Placa" placeholder="Ej. XYZ789" required style="text-transform:uppercase;" />
+            </div>
+
+            <div class="field">
+                <label>Celda a Reservar</label>
+                <select asp-for="NumeroCelda" required>
+                    <option value="">-- Seleccione una celda disponible --</option>
+                    @if (Model.CeldasDisponibles != null)
+                    {
+                        @foreach (var c in Model.CeldasDisponibles)
+                        {
+                            <option value="@c.NumeroCelda">@c.NumeroCelda (Zona @c.Zona - @c.TipoPermitido)</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Hora de Reserva</label>
+                <input type="time" asp-for="HoraReserva" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt">
+                Crear Reserva (Aplica Regla RN-03)
+            </button>
+        </form>
+
+        <div class="mt-4 pt-3" style="border-top:1px solid var(--border); margin-top:20px; padding-top:14px;">
+            <form method="post" asp-page-handler="BtVerificarVencimientos">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline btn-block">
+                    ⏱ Ejecutar Regla RN-03 (Cancelar Reservas con >15 min de retraso)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Columna derecha: Reservas activas y auditoría -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Reservas Activas (@(Model.ReservasActivas?.Count ?? 0))</h3>
+            <form method="post" asp-page-handler="BtRefrescar">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline btn-sm">Actualizar</button>
+            </form>
+        </div>
+
+        <div class="table-wrap mb-4" style="max-height: 240px; overflow-y:auto; margin-bottom:20px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>PLACA</th>
+                        <th>CELDA</th>
+                        <th>HORA</th>
+                        <th>ESTADO</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.ReservasActivas != null && Model.ReservasActivas.Any())
+                    {
+                        @foreach (var res in Model.ReservasActivas)
+                        {
+                            <tr>
+                                <td><b>#@res.IdReserva</b></td>
+                                <td><span class="plate">@res.Placa</span></td>
+                                <td><span class="tag tag-blue">@res.NumeroCelda</span></td>
+                                <td>@res.FechaHoraReserva.ToString("hh:mm tt")</td>
+                                <td><span class="tag tag-amber">@res.EstadoReserva</span></td>
+                                <td>
+                                    <form method="post" asp-page-handler="BtCancelarReserva">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="data" value="@res.IdReserva" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Cancelar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="empty">No hay reservas activas en este momento.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-head" style="border-top:1px solid var(--border); padding-top:14px;">
+            <h3>Historial de Auditoría</h3>
+        </div>
+        <div class="table-wrap" style="max-height: 200px; overflow-y:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>FECHA/HORA</th>
+                        <th>PLACA</th>
+                        <th>CELDA</th>
+                        <th>EVENTO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.HistorialAuditoria != null && Model.HistorialAuditoria.Any())
+                    {
+                        @foreach (var aud in Model.HistorialAuditoria)
+                        {
+                            <tr>
+                                <td>@aud.FechaHora.ToString("dd/MM hh:mm tt")</td>
+                                <td><b>@aud.Placa</b></td>
+                                <td><span class="tag tag-blue">@aud.NumeroCelda</span></td>
+                                <td style="color:var(--amber)">@aud.Evento: @aud.Detalles</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="empty">Sin eventos de auditoría registrados.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
