@@ -1,0 +1,163 @@
+@startuml
+title Diagrama de secuencia · Liquidación, cobro y autorización de salida (HU-04, RN-01, RN-04)
+
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 190
+skinparam ArrowColor #1F2A44
+skinparam ParticipantBackgroundColor #E1EBFF
+skinparam ParticipantBorderColor #2F6FDE
+skinparam ActorBackgroundColor #E1EBFF
+skinparam ActorBorderColor #2F6FDE
+skinparam BoundaryBackgroundColor #E8E0F7
+skinparam BoundaryBorderColor #7C5CC4
+skinparam ControlBackgroundColor #D5F2E3
+skinparam ControlBorderColor #1E9E5A
+skinparam EntityBackgroundColor #E1EBFF
+skinparam EntityBorderColor #2F6FDE
+skinparam SequenceLifeLineBorderColor #8A94A6
+skinparam SequenceGroupBackgroundColor #F4F6F9
+skinparam SequenceGroupBorderColor #6B7280
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #C9A227
+autonumber "<b>0"
+
+actor "Cajero" as Cajero
+boundary ":PantallaCaja" as Pan
+control ":LiquidacionFacade" as Fac
+entity ":RegistroParqueadero" as Reg
+entity ":ServicioLavado" as Lav
+entity ":ComprobantePago" as Comp
+participant ":MetodoPago" as Met <<Strategy>>
+entity ":Caja" as Caja
+entity ":Celda" as Celda
+boundary ":MapaCeldasVista" as Mapa
+boundary ":PantallaMapa" as PanMapa
+
+== 1. El Cajero consulta la cuenta (HU-04 CA1 y CA3 · RN-01) ==
+Cajero -> Pan : consultarCuenta(placa)
+activate Pan
+Pan -> Fac : consultarCuenta(placa)
+activate Fac
+Fac -> Fac : buscarRegistroAbierto(placa)
+Fac -> Reg : obtenerLavados()
+activate Reg
+Reg --> Fac : lavados
+deactivate Reg
+loop [cada lavado]
+  Fac -> Lav : puedeCobrarse()
+  activate Lav
+  Lav --> Fac : booleano
+  deactivate Lav
+end
+alt [algún lavado no puedeCobrarse()]
+  Fac --> Pan : error LavadoEnCurso
+  Pan --> Cajero : "El lavado debe estar Listo antes de cobrar"
+else [todos los lavados puedenCobrarse()]
+  Fac -> Reg : calcularTarifaParqueadero()
+  activate Reg
+  Reg -> Reg : calcularTiempoEstadia()
+  Reg --> Fac : valorParqueadero
+  deactivate Reg
+  Fac --> Pan : cuenta (parqueadero + lavados = total)
+  Pan --> Cajero : total a pagar
+end
+deactivate Fac
+deactivate Pan
+
+== 2. El Cajero confirma el pago (HU-04 CA4 · RN-04) ==
+Cajero -> Pan : confirmarPago(metodo)
+activate Pan
+Pan -> Fac : liquidar(placa, metodo, canal)
+activate Fac
+Fac -> Fac : iniciarTransaccion()
+Fac -> Fac : buscarRegistroAbierto(placa)
+ref over Fac, Lav : Validar lavados terminados (sección 1)
+Fac -> Reg : calcularTarifaParqueadero()
+activate Reg
+Reg --> Fac : valorParqueadero
+deactivate Reg
+create Comp
+Fac -> Comp : <<create>>\nComprobantePago(registro, lavados, total, metodo)
+activate Comp
+Fac -> Comp : procesarPago()
+Comp -> Met : procesar(total)
+activate Met
+alt [pagoRechazado]
+  Met --> Comp : rechazado
+  Comp --> Fac : false
+  Fac -> Fac : deshacerTransaccion()
+  Fac --> Pan : error PagoRechazado
+  Pan --> Cajero : "Pago rechazado"
+else [pagoAprobado]
+  Met --> Comp : aprobado
+  deactivate Met
+  Comp --> Fac : true
+  Fac -> Comp : generarComprobante()
+  deactivate Comp
+  Fac -> Reg : marcarPagado()
+  activate Reg
+  Reg --> Fac : ok
+  deactivate Reg
+  loop [cada lavado]
+    Fac -> Lav : marcarFacturado()
+  end
+  Fac -> Caja : registrarMovimiento(comprobante)
+  activate Caja
+  Caja --> Fac : ok
+  deactivate Caja
+  Fac -> Fac : confirmarTransaccion()
+  Fac --> Pan : comprobante
+  Pan --> Cajero : comprobante FAC-xxxx\n"La celda se libera cuando se autoriza la salida"
+end
+deactivate Fac
+deactivate Pan
+
+== 3. El Cajero autoriza la salida (HU-04 CA2 y CA4 · RN-04) ==
+Cajero -> Pan : autorizarSalida()
+activate Pan
+Pan -> Fac : autorizarSalida(placa)
+activate Fac
+Fac -> Fac : iniciarTransaccion()
+Fac -> Fac : buscarRegistroAbierto(placa)
+Fac -> Reg : estaPagado()
+activate Reg
+Reg --> Fac : booleano
+deactivate Reg
+alt [!estaPagado()]
+  Fac -> Fac : deshacerTransaccion()
+  Fac --> Pan : error SaldoPendiente
+  Pan --> Cajero : "Imposible registrar salida:\ncuenta con saldo pendiente de pago"
+else [estaPagado()]
+  Fac -> Reg : finalizar()
+  activate Reg
+  Reg --> Fac : ok
+  deactivate Reg
+  Fac -> Celda : liberar()
+  activate Celda
+  Celda -> Mapa : actualizar(celda)
+  activate Mapa
+  Mapa --> Celda : cambio en cola
+  deactivate Mapa
+  Celda --> Fac : ok
+  deactivate Celda
+  Fac -> Fac : confirmarTransaccion()
+  Mapa ->> PanMapa : publicarEstado(celda)
+  note right of PanMapa
+    La vista publica el cambio por WebSocket / SSE
+    solo después de confirmar la transacción.
+  end note
+  Fac --> Pan : salida autorizada
+  Pan --> Cajero : salida registrada
+end
+deactivate Fac
+deactivate Pan
+
+note over Cajero, Fac
+  Pendiente de decidir: quién autoriza la salida (Cajero u Operador).
+  El flujo no cambia, solo el actor.
+end note
+@enduml
