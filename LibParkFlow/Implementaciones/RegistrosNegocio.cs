@@ -41,6 +41,7 @@ namespace LibParkFlow.Implementaciones
                 .Include(r => r.Vehiculo)
                 .Include(r => r.Celda)
                 .Include(r => r.ServiciosLavado)
+                // Se verifica que el vehículo no tenga un ingreso activo para evitar registros duplicados.
                 .OrderByDescending(r => r.IdRegistro)
                 .FirstOrDefault(r => r.Placa == pNorm && r.EstadoRegistro != EstadoRegistro.FINALIZADO);
         }
