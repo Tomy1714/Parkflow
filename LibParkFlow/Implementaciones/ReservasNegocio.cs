@@ -116,7 +116,7 @@ namespace LibParkFlow.Implementaciones
             {
                 reserva.Celda.Liberar();
             }
-
+            // Se registra la cancelación para mantener el historial de auditoría de la reserva.
             _conexion.AuditoriasReserva?.Add(new AuditoriaReserva
             {
                 FechaHora = fecha,
