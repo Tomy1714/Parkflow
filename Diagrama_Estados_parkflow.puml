@@ -1,0 +1,58 @@
+@startuml
+title Diagrama de máquina de estados · RegistroParqueadero (EstadoRegistro) — Sistema PARKFLOW
+
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundCorner 20
+skinparam ArrowColor #1F2A44
+skinparam ArrowFontSize 12
+skinparam ArrowFontColor #1F2A44
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #C9A227
+skinparam StateBorderColor #2F6FDE
+skinparam StateBackgroundColor #E1EBFF
+skinparam StateBackgroundColor<<pagado>> #D5F2E3
+skinparam StateBorderColor<<pagado>> #1E9E5A
+skinparam StateBackgroundColor<<final>> #E8E0F7
+skinparam StateBorderColor<<final>> #7C5CC4
+skinparam LegendBackgroundColor #F4F6F9
+skinparam LegendBorderColor #8A94A6
+hide empty description
+
+state "Activo" as Activo
+state "Pagado" as Pagado <<pagado>>
+state "Finalizado" as Finalizado <<final>>
+
+Activo : entry / registrarEntrada()
+Activo : do / calcularTiempoEstadia()
+Activo : ----
+Activo : consultarCuenta() / calcularTarifaParqueadero()
+Activo : confirmarPago() [lavadoEnCurso] / informarLavadoEnCurso()
+Activo : confirmarPago() [sinLavadoEnCurso && pagoRechazado]
+Activo : \t/ notificarPagoRechazado()
+Activo : autorizarSalida() [cuentaPendiente] / rechazarSalida()
+
+Pagado : entry / marcarPagado()
+
+Finalizado : entry / liberarCelda()
+
+[*] --> Activo
+
+Activo --> Pagado : confirmarPago()\n[sinLavadoEnCurso && pagoAprobado]\n/ generarComprobante(), registrarMovimientoCaja()
+
+Pagado --> Finalizado : autorizarSalida()\n[cuentaPagada]\n/ registrarHoraSalida()
+
+Finalizado --> [*]
+
+note bottom of Pagado
+  La celda sigue Ocupada en este estado:
+  solo se libera al entrar a Finalizado (RN-04).
+end note
+
+legend bottom
+  Sintaxis de transición: evento [guarda] / efecto
+  Las transiciones listadas dentro de Activo son internas: no ejecutan exit ni entry.
+endlegend
+@enduml
