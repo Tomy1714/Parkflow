@@ -1,0 +1,102 @@
+@startuml
+title Diagrama de componentes UML — Sistema PARKFLOW (alineado con el código)
+
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam componentStyle uml2
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam ArrowColor #44546A
+skinparam ComponentBackgroundColor #E1EBFF
+skinparam ComponentBorderColor #2F6FDE
+skinparam PackageBorderColor #6B7280
+skinparam PackageBackgroundColor #FAFBFC
+skinparam InterfaceBackgroundColor white
+skinparam InterfaceBorderColor #44546A
+skinparam InterfaceFontSize 11
+skinparam DatabaseBackgroundColor #D6E4F7
+skinparam DatabaseBorderColor #2F6FDE
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #C9A227
+
+package "Capa de presentación" {
+  component "Aplicación web\n(Razor Pages + app.js)" as Web #D9D9D9
+  component "API REST\n(9 controladores)" as Api #D9D9D9
+}
+
+package "LibParkFlow · negocio y patrones GoF" {
+  component "Autenticación\ny roles" as Auth <<Factory Method>>
+  component "Registro\nde ingreso" as Ingreso
+  component "Gestión\nde reservas" as Reservas
+  component "Gestión\nde celdas" as Celdas <<Observer>>
+  component "Control\nde lavado" as Lavado <<State>>
+  component "Liquidación\ny cobro" as Liq <<Facade + Strategy>>
+  component "Caja y\ncomprobantes" as Caja
+}
+
+component "Acceso a datos\n(Conexion · EF Core)" as Datos
+database "SQL Server\n(base ParkFlow)" as DB
+
+interface "IUsuarios\nNegocio" as IUsu
+interface "IRegistros\nNegocio" as IReg
+interface "IVehiculos\nNegocio" as IVeh
+interface "IReservas\nNegocio" as IRes
+interface "ICeldas\nNegocio" as ICel
+interface "IServicios\nLavadoNegocio" as ILav
+interface "ILiquidacion\nFacade" as ILiq
+interface "ICajas\nNegocio" as ICaj
+interface "IComprobantes\nNegocio" as ICom
+interface "IConexion" as ICon
+
+IUsu -- Auth
+IReg -- Ingreso
+IVeh -- Ingreso
+IRes -- Reservas
+ICel -- Celdas
+ILav -- Lavado
+ILiq -- Liq
+ICaj -- Caja
+ICom -- Caja
+
+Api -( IUsu
+Api -( IReg
+Api -( IVeh
+Api -( IRes
+Api -( ICel
+Api -( ILav
+Api -( ILiq
+Api -( ICaj
+Api -( ICom
+
+Web -( IReg
+Web -( IRes
+Web -( ILav
+Web -( ILiq
+Web -( ICel
+Web -( IUsu
+Web -( IVeh
+
+ICon -- Datos
+Auth -( ICon
+Ingreso -( ICon
+Reservas -( ICon
+Celdas -( ICon
+Lavado -( ICon
+Liq -( ICon
+Caja -( ICon
+
+Datos ..> DB : <<use>>\nTDS / TCP
+
+note bottom of Liq
+  Aplica Facade (ILiquidacionFacade) y Strategy
+  (IMetodoPagoStrategy). Un solo SaveChanges()
+  hace atómico cada cobro o salida.
+end note
+
+note bottom of Celdas
+  Observer: IObservadorCelda.
+  La pantalla se actualiza por sondeo (1 s).
+end note
+@enduml
