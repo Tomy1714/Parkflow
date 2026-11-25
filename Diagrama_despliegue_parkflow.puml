@@ -1,0 +1,63 @@
+@startuml
+title Diagrama de despliegue UML (nivel de especificación) — Sistema PARKFLOW
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+' (*) Supuestos de despliegue: confirmar o reemplazar según el entorno real.
+' Confirmar también el nombre real del proyecto web y de la biblioteca en el repositorio.
+
+node "Dispositivo del cliente\n(celular o computador)" <<device>> as cli {
+  node "Navegador web" <<executionEnvironment>> as navc {
+    artifact "Páginas web\n(HTML, CSS y app.js)" <<artifact>> as webc
+  }
+}
+node "Estación del personal\n(computador o tablet)" <<device>> as est {
+  node "Navegador web" <<executionEnvironment>> as navp {
+    artifact "Páginas web\n(HTML, CSS y app.js)" <<artifact>> as webp
+  }
+}
+node "Servidor de aplicación*" <<device>> as app {
+  node "Entorno de ejecución ASP.NET Core (C#)" <<executionEnvironment>> as run {
+    artifact "Aplicación web ParkFlow\n(Razor Pages + API REST, 9 controladores)" <<artifact>> as web
+    artifact "Biblioteca LibParkFlow\n(negocio, patrones GoF y acceso a datos EF Core)" <<artifact>> as lib
+    artifact "Configuración\n(cadena de conexión)" <<artifact>> as cfg
+  }
+}
+node "Servidor de base de datos*" <<device>> as bd {
+  node "SQL Server" <<executionEnvironment>> as sql {
+    artifact "Base de datos ParkFlow\n(esquema relacional)" <<artifact>> as db
+  }
+}
+cloud "Pasarela de pagos\n(sistema externo, simulada en el MVP)" <<externalSystem>> as pas
+
+cli -- app : HTTPS\nREST (JSON) y sondeo cada 1 s
+est -- app : HTTPS\nREST (JSON) y sondeo cada 1 s
+app -- bd : TDS / TCP\n(red privada)
+app -- pas : HTTPS
+
+component "Aplicación web" as c1
+component "API REST" as c2
+component "LibParkFlow\n(negocio y patrones GoF)" as c3
+component "Acceso a datos (EF Core)" as c4
+webc ..> c1 : <<manifest>>
+webp ..> c1 : <<manifest>>
+web ..> c2 : <<manifest>>
+lib ..> c3 : <<manifest>>
+lib ..> c4 : <<manifest>>
+
+note bottom of app
+  Especificación de despliegue*
+  Runtime = ASP.NET Core
+  Acceso a datos = EF Core
+  Contraseñas con hash (RNF-04)
+  Disponibilidad objetivo = 99,5 % (RNF-02)
+end note
+note bottom of bd
+  Especificación de despliegue*
+  Motor = SQL Server
+  Respaldos periódicos*
+end note
+note top of cli
+  (*) Supuesto: los documentos no fijan la infraestructura.
+  En el MVP la pasarela es un módulo simulado.
+end note
+@enduml
